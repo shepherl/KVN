@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 
 public class App {
     public static void main(String[] args) {
+        System.setProperty("apple.awt.UIElement", "true");
         if (!SystemTray.isSupported()) {
             System.out.println("Статус-бар не поддерживается");
             return;

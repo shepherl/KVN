@@ -13,7 +13,7 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          architecture: x64 # ФОКУС ТУТ: заставляем JDK работать в режиме эмуляции Intel
+          architecture: x64 
 
       - name: Make gradlew executable
         run: chmod +x gradlew
@@ -27,7 +27,8 @@ jobs:
                    --input app/build/libs/ \
                    --main-jar app.jar \
                    --main-class org.example.App \
-                   --dest output/
+                   --dest output/ \
+                   --java-options "-Dapple.awt.UIElement=true"
                    
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
