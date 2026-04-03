@@ -3,7 +3,7 @@ on: [push]
 
 jobs:
   build:
-    runs-on: macos-latest # Используем самый быстрый сервер (M1)
+    runs-on: macos-latest # Запускаем на M1, но собираем под Intel
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -15,15 +15,34 @@ jobs:
           distribution: 'temurin'
           architecture: x64 
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      # Шаг 1: Клонируем и собираем wireproxy-awg специально под Intel
+      - name: Build wireproxy (Go)
+        run: |
+          git clone https://github.com/artem-russkikh/wireproxy-awg.git
+          cd wireproxy-awg
+          # Собираем под Intel Mac (amd64)
+          GOOS=darwin GOARCH=amd64 go build -o ../wireproxy ./cmd/wireproxy
+          chmod +x ../wireproxy
+          cd ..
+          # Копируем бинарник в папку, которую jpackage берет как входную
+          cp wireproxy app/build/libs/
+
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      - name: Build with Gradle
+      - name: Build Java App with Gradle
         run: ./gradlew build
 
+      # Шаг 2: Создаем пакет. jpackage возьмет всё из --input (и jar, и wireproxy)
       - name: Create Package (jpackage)
         run: |
           jpackage --name "MyStatusTool" \
+                   --type dmg \
                    --input app/build/libs/ \
                    --main-jar app.jar \
                    --main-class org.example.App \
