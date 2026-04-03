@@ -23,13 +23,12 @@ jobs:
 
       - name: Create Package (jpackage)
         run: |
-          # Создаем исполняемый пакет без установщика (просто .app)
-          jpackage --type app \
-                   --name "MyStatusTool" \
+          jpackage --name "MyStatusTool" \
                    --input app/build/libs/ \
                    --main-jar app.jar \
                    --main-class org.example.App \
-                   --dest output/
+                   --dest output/ \
+                   --mac-package-name "MyStatusTool"
         # Замени org.example.App на свой класс и app.jar на имя твоего jar файла
 
       - name: Upload Artifact
