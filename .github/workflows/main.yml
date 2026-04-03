@@ -18,19 +18,22 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      # Сначала собираем Java, чтобы Gradle создал папку build/libs
       - name: Build Java App with Gradle
         run: ./gradlew build
 
-      # Теперь копируем твой ГОТОВЫЙ бинарник в папку к JAR-файлу
-      - name: Prepare Bundle (Add Go Binary)
+      # Подготавливаем всё содержимое из твоей папки
+      - name: Prepare Bundle (Add wireproxy and configs)
         run: |
-          # Предполагаем, что ты положил wireproxy в корень репозитория
+          # Копируем бинарник и ВСЕ конфиги из твоей структуры
+          # Предполагаю, что на скрине папка называется input_libs/wireproxy/
           cp input_libs/wireproxy/wireproxy app/build/libs/
+          cp input_libs/wireproxy/*.conf app/build/libs/
+          
           chmod +x app/build/libs/wireproxy
-          ls -lh app/build/libs/ # Проверка в логах, что оба файла на месте
+          
+          echo "Contents of build/libs (ready for jpackage):"
+          ls -lh app/build/libs/
 
-      # jpackage упакует ВСЁ содержимое папки --input в одно место
       - name: Create Package (jpackage)
         run: |
           jpackage --name "MyStatusTool" \

@@ -92,7 +92,7 @@ public class App {
             proxyFile.setExecutable(true);
 
             // ЗАПУСК: vpn.conf должен лежать в той же папке (мы это прописали в YAML)
-            ProcessBuilder pb = new ProcessBuilder(proxyFile.getAbsolutePath(), "-config", "vpn.conf");
+            ProcessBuilder pb = new ProcessBuilder(proxyFile.getAbsolutePath(), "-config", "proxy.conf");
             pb.directory(new File(jarDir)); 
             
             // Перенаправляем вывод ошибок в консоль для отладки
