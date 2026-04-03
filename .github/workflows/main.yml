@@ -3,7 +3,7 @@ on: [push] # Собирать при каждом пуше в репозитор
 
 jobs:
   build:
-    runs-on: macos-13 # Запускаем на сервере Apple
+    macos-latest # Запускаем на сервере Apple
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
