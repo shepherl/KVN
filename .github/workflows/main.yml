@@ -28,7 +28,8 @@ jobs:
                    --main-jar app.jar \
                    --main-class org.example.App \
                    --dest output/ \
-                   --mac-package-name "MyStatusTool"
+                   --mac-package-name "MyStatusTool" \
+                   --arguments "-Dapple.awt.UIElement=true"
         # Замени org.example.App на свой класс и app.jar на имя твоего jar файла
 
       - name: Upload Artifact
