@@ -3,7 +3,7 @@ on: [push]
 
 jobs:
   build:
-    runs-on: macos-latest # Запускаем на M1, но собираем под Intel
+    runs-on: macos-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -15,30 +15,22 @@ jobs:
           distribution: 'temurin'
           architecture: x64 
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.21'
-
-      # Шаг 1: Клонируем и собираем wireproxy-awg специально под Intel
-      - name: Build wireproxy (Go)
-        run: |
-          git clone https://github.com/artem-russkikh/wireproxy-awg.git
-          cd wireproxy-awg
-          # Собираем под Intel Mac (amd64)
-          GOOS=darwin GOARCH=amd64 go build -o ../wireproxy ./cmd/wireproxy
-          chmod +x ../wireproxy
-          cd ..
-          # Копируем бинарник в папку, которую jpackage берет как входную
-          cp wireproxy app/build/libs/
-
       - name: Make gradlew executable
         run: chmod +x gradlew
 
+      # Сначала собираем Java, чтобы Gradle создал папку build/libs
       - name: Build Java App with Gradle
         run: ./gradlew build
 
-      # Шаг 2: Создаем пакет. jpackage возьмет всё из --input (и jar, и wireproxy)
+      # Теперь копируем твой ГОТОВЫЙ бинарник в папку к JAR-файлу
+      - name: Prepare Bundle (Add Go Binary)
+        run: |
+          # Предполагаем, что ты положил wireproxy в корень репозитория
+          cp input_libs/wireproxy/wireproxy app/build/libs/
+          chmod +x app/build/libs/wireproxy
+          ls -lh app/build/libs/ # Проверка в логах, что оба файла на месте
+
+      # jpackage упакует ВСЁ содержимое папки --input в одно место
       - name: Create Package (jpackage)
         run: |
           jpackage --name "MyStatusTool" \
