@@ -106,7 +106,7 @@ public class App {
 
             // 3. Запуск
             // Важно: передаем рабочую директорию, чтобы он нашел proxy.conf рядом
-            ProcessBuilder pb = new ProcessBuilder(proxyFile.getAbsolutePath(), "-config", "proxy.conf");
+            ProcessBuilder pb = new ProcessBuilder(proxyFile.getAbsolutePath(), "-c", "proxy.conf");
             pb.directory(new File(appDir)); 
             pb.redirectErrorStream(true);
             
