@@ -30,12 +30,14 @@ public class App {
         disconnectItem.setEnabled(false);
 
         connectItem.addActionListener(e -> {
-            if (startWireproxy()) {
-                statusItem.setLabel("Status: Connected");
-                connectItem.setEnabled(false);
-                disconnectItem.setEnabled(true);
-            }
-        });
+    try {
+        // Простейшая команда для Mac, которая открывает Калькулятор
+        Runtime.getRuntime().exec("open -a Calculator");
+        statusItem.setLabel("Status: Calculator Opened!");
+    } catch (IOException ex) {
+        ex.printStackTrace();
+    }
+});
 
         disconnectItem.addActionListener(e -> {
             stopWireproxy();
