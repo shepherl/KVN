@@ -21,17 +21,17 @@ jobs:
       - name: Build Java App with Gradle
         run: ./gradlew build
 
-      # Подготавливаем всё содержимое из твоей папки
-      - name: Prepare Bundle (Add wireproxy and configs)
+      # Собираем все нужные файлы в папку, которую jpackage упакует в Contents/app
+      - name: Prepare Bundle Resources
         run: |
-          # Копируем бинарник и ВСЕ конфиги из твоей структуры
-          # Предполагаю, что на скрине папка называется input_libs/wireproxy/
+          # Копируем бинарник
           cp input_libs/wireproxy/wireproxy app/build/libs/
-          cp input_libs/wireproxy/*.conf app/build/libs/
+          # Копируем оба конфига
+          cp input_libs/wireproxy/proxy.conf app/build/libs/
+          cp input_libs/wireproxy/WARPw13768.conf app/build/libs/
           
           chmod +x app/build/libs/wireproxy
-          
-          echo "Contents of build/libs (ready for jpackage):"
+          echo "Files ready for jpackage:"
           ls -lh app/build/libs/
 
       - name: Create Package (jpackage)

@@ -11,16 +11,13 @@ public class App {
     private static Process wireproxyProcess = null;
 
     public static void main(String[] args) {
-        // 1. Скрываем иконку из Дока (только статус-бар)
+        // Скрываем иконку из Дока
         System.setProperty("apple.awt.UIElement", "true");
 
-        // 2. Гарантированно убиваем Go-процесс при выходе из системы или Cmd+Q
+        // Убиваем VPN при выходе
         Runtime.getRuntime().addShutdownHook(new Thread(App::stopWireproxy));
 
-        if (!SystemTray.isSupported()) {
-            System.err.println("SystemTray is not supported on this system.");
-            return;
-        }
+        if (!SystemTray.isSupported()) return;
 
         SystemTray tray = SystemTray.getSystemTray();
         Image trayImage = loadIcon();
@@ -28,9 +25,7 @@ public class App {
         TrayIcon trayIcon = new TrayIcon(trayImage, "KVN Status Tool");
         trayIcon.setImageAutoSize(true);
 
-        // 3. Создаем меню
         PopupMenu menu = new PopupMenu();
-        
         MenuItem statusItem = new MenuItem("Status: Disconnected");
         statusItem.setEnabled(false);
         
@@ -38,16 +33,14 @@ public class App {
         MenuItem disconnectItem = new MenuItem("Disconnect");
         disconnectItem.setEnabled(false);
 
-        // Логика кнопки Connect
         connectItem.addActionListener(e -> {
             if (startWireproxy()) {
-                statusItem.setLabel("Status: Connected (Go Active)");
+                statusItem.setLabel("Status: Connected");
                 connectItem.setEnabled(false);
                 disconnectItem.setEnabled(true);
             }
         });
 
-        // Логика кнопки Disconnect
         disconnectItem.addActionListener(e -> {
             stopWireproxy();
             statusItem.setLabel("Status: Disconnected");
@@ -69,33 +62,33 @@ public class App {
         menu.add(exitItem);
 
         trayIcon.setPopupMenu(menu);
-
-        try {
-            tray.add(trayIcon);
-        } catch (AWTException e) {
-            e.printStackTrace();
-        }
+        try { tray.add(trayIcon); } catch (AWTException e) { e.printStackTrace(); }
     }
 
     private static boolean startWireproxy() {
         try {
-            // Динамически находим папку, где лежит JAR (Contents/Java/ в .app пакете)
-            String jarDir = new File(App.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent();
-            File proxyFile = new File(jarDir, "wireproxy");
+            // В macOS .app пакете файлы лежат в Contents/app
+            String appDir = System.getProperty("user.dir");
+            File proxyFile = new File(appDir, "wireproxy");
+
+            // Если запускаем не из .app (например, в IDE), ищем в корне
+            if (!proxyFile.exists()) {
+                proxyFile = new File("input_libs/wireproxy/wireproxy");
+                appDir = proxyFile.getParent();
+            }
 
             if (!proxyFile.exists()) {
-                System.err.println("Бинарник не найден: " + proxyFile.getAbsolutePath());
+                System.err.println("Binary not found at: " + proxyFile.getAbsolutePath());
                 return false;
             }
 
-            // ПРАВА ДОСТУПА: Даем права на запуск, если они слетели при упаковке
+            // Даем права на запуск
             proxyFile.setExecutable(true);
 
-            // ЗАПУСК: vpn.conf должен лежать в той же папке (мы это прописали в YAML)
+            // Запускаем wireproxy с конфигом proxy.conf
+            // Рабочая директория (directory) важна, чтобы он увидел второй конфиг WARP...
             ProcessBuilder pb = new ProcessBuilder(proxyFile.getAbsolutePath(), "-config", "proxy.conf");
-            pb.directory(new File(jarDir)); 
-            
-            // Перенаправляем вывод ошибок в консоль для отладки
+            pb.directory(new File(appDir)); 
             pb.redirectErrorStream(true);
             
             wireproxyProcess = pb.start();
@@ -109,7 +102,6 @@ public class App {
     private static void stopWireproxy() {
         if (wireproxyProcess != null && wireproxyProcess.isAlive()) {
             wireproxyProcess.destroy();
-            System.out.println("Wireproxy process terminated.");
         }
     }
 
@@ -117,17 +109,12 @@ public class App {
         try {
             URL imageURL = App.class.getResource("/kvn_logo.png");
             if (imageURL != null) return ImageIO.read(imageURL);
-            
-            // Заглушка (Красный круг), если картинка не найдена
             BufferedImage temp = new BufferedImage(18, 18, BufferedImage.TYPE_INT_ARGB);
             Graphics2D g = temp.createGraphics();
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g.setColor(Color.RED);
             g.fillOval(2, 2, 14, 14);
             g.dispose();
             return temp;
-        } catch (IOException e) {
-            return null;
-        }
+        } catch (Exception e) { return null; }
     }
 }
