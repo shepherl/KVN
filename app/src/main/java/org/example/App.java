@@ -2,8 +2,7 @@ package org.example;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import javax.imageio.ImageIO;
 
@@ -11,10 +10,7 @@ public class App {
     private static Process wireproxyProcess = null;
 
     public static void main(String[] args) {
-        // Скрываем иконку из Дока
         System.setProperty("apple.awt.UIElement", "true");
-
-        // Убиваем VPN при выходе
         Runtime.getRuntime().addShutdownHook(new Thread(App::stopWireproxy));
 
         if (!SystemTray.isSupported()) return;
@@ -67,31 +63,42 @@ public class App {
 
     private static boolean startWireproxy() {
         try {
-            // В macOS .app пакете файлы лежат в Contents/app
+            // 1. Пытаемся найти папку приложения (Contents/app)
             String appDir = System.getProperty("user.dir");
             File proxyFile = new File(appDir, "wireproxy");
 
-            // Если запускаем не из .app (например, в IDE), ищем в корне
+            // Резервный поиск, если запуск идет не из-под jpackage
             if (!proxyFile.exists()) {
-                proxyFile = new File("input_libs/wireproxy/wireproxy");
-                appDir = proxyFile.getParent();
+                String jarPath = App.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+                appDir = new File(jarPath).getParent();
+                proxyFile = new File(appDir, "wireproxy");
             }
 
+            System.out.println("DEBUG: Working Dir: " + appDir);
             if (!proxyFile.exists()) {
-                System.err.println("Binary not found at: " + proxyFile.getAbsolutePath());
+                System.err.println("CRITICAL: wireproxy not found at " + proxyFile.getAbsolutePath());
                 return false;
             }
 
-            // Даем права на запуск
             proxyFile.setExecutable(true);
 
-            // Запускаем wireproxy с конфигом proxy.conf
-            // Рабочая директория (directory) важна, чтобы он увидел второй конфиг WARP...
+            // 2. Запуск процесса с захватом вывода для отладки
             ProcessBuilder pb = new ProcessBuilder(proxyFile.getAbsolutePath(), "-config", "proxy.conf");
             pb.directory(new File(appDir)); 
             pb.redirectErrorStream(true);
             
             wireproxyProcess = pb.start();
+
+            // 3. Поток для чтения логов (чтобы понять, почему не подключается)
+            new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(wireproxyProcess.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        System.out.println("GO_LOG: " + line);
+                    }
+                } catch (IOException e) { e.printStackTrace(); }
+            }).start();
+
             return true;
         } catch (Exception e) {
             e.printStackTrace();
