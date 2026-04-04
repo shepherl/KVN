@@ -29,15 +29,25 @@ public class App {
         MenuItem disconnectItem = new MenuItem("Disconnect");
         disconnectItem.setEnabled(false);
 
+        // --- ИСПРАВЛЕННАЯ ЛОГИКА ТУТ ---
         connectItem.addActionListener(e -> {
-    try {
-        // Простейшая команда для Mac, которая открывает Калькулятор
-        Runtime.getRuntime().exec("open -a Calculator");
-        statusItem.setLabel("Status: Calculator Opened!");
-    } catch (IOException ex) {
-        ex.printStackTrace();
-    }
-});
+            statusItem.setLabel("Status: Connecting...");
+            
+            // Сначала пробуем запустить наш Go бинарник
+            if (startWireproxy()) {
+                statusItem.setLabel("Status: Connected (Go Active)");
+                connectItem.setEnabled(false);
+                disconnectItem.setEnabled(true);
+            } else {
+                // Если не вышло, пробуем открыть калькулятор как запасной тест
+                statusItem.setLabel("Status: Error! Opening Calc...");
+                try {
+                    Runtime.getRuntime().exec("open -a Calculator");
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
 
         disconnectItem.addActionListener(e -> {
             stopWireproxy();
@@ -65,38 +75,49 @@ public class App {
 
     private static boolean startWireproxy() {
         try {
-            // 1. Пытаемся найти папку приложения (Contents/app)
+            // 1. Поиск папки (Contents/app)
             String appDir = System.getProperty("user.dir");
+            
+            // Если мы внутри .app, user.dir часто указывает на Contents/app. 
+            // Но если запуск из Терминала, путь может отличаться. Проверим:
             File proxyFile = new File(appDir, "wireproxy");
-
-            // Резервный поиск, если запуск идет не из-под jpackage
+            
             if (!proxyFile.exists()) {
+                // Резервный поиск через путь к JAR
                 String jarPath = App.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
                 appDir = new File(jarPath).getParent();
                 proxyFile = new File(appDir, "wireproxy");
             }
 
-            System.out.println("DEBUG: Working Dir: " + appDir);
+            System.out.println("DEBUG: Binary Path -> " + proxyFile.getAbsolutePath());
+
             if (!proxyFile.exists()) {
-                System.err.println("CRITICAL: wireproxy not found at " + proxyFile.getAbsolutePath());
+                System.err.println("CRITICAL: wireproxy NOT FOUND!");
                 return false;
             }
 
+            // 2. Снимаем карантин macOS (БЕЗ ЭТОГО НЕ ЗАПУСТИТСЯ)
+            // Если файл скачан из GitHub Actions, macOS пометит его как подозрительный.
+            try {
+                Runtime.getRuntime().exec(new String[]{"xattr", "-d", "com.apple.quarantine", proxyFile.getAbsolutePath()});
+            } catch (Exception ignored) {} 
+
             proxyFile.setExecutable(true);
 
-            // 2. Запуск процесса с захватом вывода для отладки
+            // 3. Запуск
+            // Важно: передаем рабочую директорию, чтобы он нашел proxy.conf рядом
             ProcessBuilder pb = new ProcessBuilder(proxyFile.getAbsolutePath(), "-config", "proxy.conf");
             pb.directory(new File(appDir)); 
             pb.redirectErrorStream(true);
             
             wireproxyProcess = pb.start();
 
-            // 3. Поток для чтения логов (чтобы понять, почему не подключается)
+            // 4. Поток чтения логов (чтобы увидеть ошибки Go в Терминале)
             new Thread(() -> {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(wireproxyProcess.getInputStream()))) {
                     String line;
                     while ((line = reader.readLine()) != null) {
-                        System.out.println("GO_LOG: " + line);
+                        System.out.println("[GO_ENGINE]: " + line);
                     }
                 } catch (IOException e) { e.printStackTrace(); }
             }).start();
@@ -111,6 +132,7 @@ public class App {
     private static void stopWireproxy() {
         if (wireproxyProcess != null && wireproxyProcess.isAlive()) {
             wireproxyProcess.destroy();
+            System.out.println("DEBUG: wireproxy stopped.");
         }
     }
 
