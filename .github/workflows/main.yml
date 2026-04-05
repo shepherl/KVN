@@ -38,7 +38,7 @@ jobs:
                    --type dmg \
                    --input app/build/libs/ \
                    --main-jar app.jar \
-                   --icon src/main/resources/kvn_logo_dock.icns \
+                   --icon app/src/main/resources/kvn_logo_dock.icns \
                    --main-class org.example.App \
                    --dest output/ \
                    --java-options "-Dapple.awt.UIElement=true"
