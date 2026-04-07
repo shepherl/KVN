@@ -24,7 +24,7 @@ public class App {
         PopupMenu menu = new PopupMenu();
         MenuItem statusItem = new MenuItem("Status: Disconnected");
         statusItem.setEnabled(false);
-        
+
         MenuItem connectItem = new MenuItem("Connect VPN");
         MenuItem disconnectItem = new MenuItem("Disconnect");
         disconnectItem.setEnabled(false);
@@ -32,7 +32,7 @@ public class App {
         // --- ИСПРАВЛЕННАЯ ЛОГИКА ТУТ ---
         connectItem.addActionListener(e -> {
             statusItem.setLabel("Status: Connecting...");
-            
+
             // Сначала пробуем запустить наш Go бинарник
             if (startWireproxy()) {
                 statusItem.setLabel("Status: Connected (Go Active)");
