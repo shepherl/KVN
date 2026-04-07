@@ -25,7 +25,7 @@ public class SettingsParser { // Парсер значений из json
 
     public static boolean auto_start(){ // Проверка значения автозапуска в файле
 
-        Path path = Path.of("base.json");
+        Path path = Path.of("/Users/shepherl/KVN/base.json");
         String content;
         try{
             content = Files.readString(path);

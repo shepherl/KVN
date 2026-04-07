@@ -29,8 +29,8 @@ public class App {
         MenuItem disconnectItem = new MenuItem("Disconnect");
         disconnectItem.setEnabled(false);
 
-        // --- ИСПРАВЛЕННАЯ ЛОГИКА ТУТ ---
-        if(true){ // Проверка наличия автозапуска
+        // Логика работы автозапуска vpn при запуске утилиты
+        if(SettingsParser.auto_start()){ // Проверка наличия автозапуска
             if (startWireproxy()) {
                 statusItem.setLabel("Status: Connected (Go Active)");
                 connectItem.setEnabled(false);
