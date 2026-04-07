@@ -28,6 +28,7 @@ public class App {
         MenuItem connectItem = new MenuItem("Connect VPN");
         MenuItem disconnectItem = new MenuItem("Disconnect");
         disconnectItem.setEnabled(false);
+        CheckboxMenuItem autoStatrtCheckbox = new CheckboxMenuItem("Автозапуск",false);
 
         // Логика работы автозапуска vpn при запуске утилиты
         if(SettingsParser.auto_start()){ // Проверка наличия автозапуска
@@ -67,10 +68,11 @@ public class App {
             System.exit(0);
         });
 
-        menu.add(statusItem);
+        menu.add(statusItem); // Список элементов в интерфейсе
         menu.addSeparator();
         menu.add(connectItem);
         menu.add(disconnectItem);
+        menu.add(autoStatrtCheckbox); // Чекбокс автозапуска
         menu.addSeparator();
         menu.add(exitItem);
 
