@@ -13,7 +13,7 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          architecture: x64 
+          architecture: x64
 
       - name: Make gradlew executable
         run: chmod +x gradlew
@@ -27,7 +27,7 @@ jobs:
           # Копируем бинарник и ВСЕ конфиги из твоей папки
           cp input_libs/wireproxy/wireproxy app/build/libs/
           cp input_libs/wireproxy/*.conf app/build/libs/
-          
+
           chmod +x app/build/libs/wireproxy
           echo "Files in build folder:"
           ls -lh app/build/libs/
@@ -42,7 +42,7 @@ jobs:
                    --main-class org.example.App \
                    --dest output/ \
                    --java-options "-Dapple.awt.UIElement=true"
-                   
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:

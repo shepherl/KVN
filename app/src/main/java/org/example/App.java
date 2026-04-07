@@ -30,6 +30,16 @@ public class App {
         disconnectItem.setEnabled(false);
 
         // --- ИСПРАВЛЕННАЯ ЛОГИКА ТУТ ---
+        if(true){ // Проверка наличия автозапуска
+            if (startWireproxy()) {
+                statusItem.setLabel("Status: Connected (Go Active)");
+                connectItem.setEnabled(false);
+                disconnectItem.setEnabled(true);
+            } else {
+                System.out.println("Ошибка запуска утилиты");
+            }
+
+        }else{
         connectItem.addActionListener(e -> {
             statusItem.setLabel("Status: Connecting...");
 
@@ -39,15 +49,10 @@ public class App {
                 connectItem.setEnabled(false);
                 disconnectItem.setEnabled(true);
             } else {
-                // Если не вышло, пробуем открыть калькулятор как запасной тест
-                statusItem.setLabel("Status: Error! Opening Calc...");
-                try {
-                    Runtime.getRuntime().exec("open -a Calculator");
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
+                System.out.println("Ошибка запуска утилиты");
             }
         });
+        }
 
         disconnectItem.addActionListener(e -> {
             stopWireproxy();
@@ -55,7 +60,7 @@ public class App {
             connectItem.setEnabled(true);
             disconnectItem.setEnabled(false);
         });
-        
+
         MenuItem exitItem = new MenuItem("Exit");
         exitItem.addActionListener(e -> {
             stopWireproxy();
@@ -77,11 +82,11 @@ public class App {
         try {
             // 1. Поиск папки (Contents/app)
             String appDir = System.getProperty("user.dir");
-            
+
             // Если мы внутри .app, user.dir часто указывает на Contents/app. 
             // Но если запуск из Терминала, путь может отличаться. Проверим:
             File proxyFile = new File(appDir, "wireproxy");
-            
+
             if (!proxyFile.exists()) {
                 // Резервный поиск через путь к JAR
                 String jarPath = App.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
@@ -100,16 +105,16 @@ public class App {
             // Если файл скачан из GitHub Actions, macOS пометит его как подозрительный.
             try {
                 Runtime.getRuntime().exec(new String[]{"xattr", "-d", "com.apple.quarantine", proxyFile.getAbsolutePath()});
-            } catch (Exception ignored) {} 
+            } catch (Exception ignored) {}
 
             proxyFile.setExecutable(true);
 
             // 3. Запуск
             // Важно: передаем рабочую директорию, чтобы он нашел proxy.conf рядом
             ProcessBuilder pb = new ProcessBuilder(proxyFile.getAbsolutePath(), "-c", "proxy.conf");
-            pb.directory(new File(appDir)); 
+            pb.directory(new File(appDir));
             pb.redirectErrorStream(true);
-            
+
             wireproxyProcess = pb.start();
 
             // 4. Поток чтения логов (чтобы увидеть ошибки Go в Терминале)
