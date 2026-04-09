@@ -38,6 +38,7 @@ public class App {
                 FileUtils.createDirectory(Path.of("/Users/shepherl/KVN/"));
                 FileUtils.createfiles(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"));
                 try{
+                System.out.println("Файла нет");
                 Files.writeString(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"),"{\n" + //
                                         "\"autoStart\": 0,\n" + //
                                         "\"Lol\": 2\n" + //
@@ -53,8 +54,8 @@ public class App {
             }
             try{
                 Files.writeString(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"),"{\n" + //
-                                        "  \"autoStart\": 0,\n" + //
-                                        "  \"Lol\": 2\n" + //
+                                        " \"autoStart\": 0,\n" + //
+                                        " \"Lol\": 2\n" + //
                                         "}");
                 }catch(IOException e){
                     e.getMessage();
