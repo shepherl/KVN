@@ -42,7 +42,7 @@ public class App {
                 }catch(IOException e){
                     e.getMessage();
                 }
-                
+                System.out.println("Все на месте");
         }
         System.setProperty("apple.awt.UIElement", "true");
         Runtime.getRuntime().addShutdownHook(new Thread(App::stopWireproxy));
