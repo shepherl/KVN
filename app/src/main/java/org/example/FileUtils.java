@@ -40,9 +40,9 @@ public class FileUtils {
             Files.writeString(path,content);
             }else{
                 content = Files.readString(path);
-                System.out.println("Работай !!!!!");
                 content = content.replace("\"autoStatrt\": 1", "\"autoStart\": 0");
                 Files.writeString(path,content);
+                System.out.println("Работай !!!!!");
             }
 
 
