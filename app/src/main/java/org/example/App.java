@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import javax.imageio.ImageIO;
@@ -36,12 +37,28 @@ public class App {
             if(!FileUtils.checkFileExists()){
                 FileUtils.createDirectory(Path.of("/Users/shepherl/KVN/"));
                 FileUtils.createfiles(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"));
+                try{
+                Files.writeString(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"),"{\n" + //
+                                        "  \"autoStart\": 0,\n" + //
+                                        "  \"Lol\": 2\n" + //
+                                        "}");
+                }catch(IOException e){
+                    e.getMessage();
+                }
             }
         }else{
             if(!FileUtils.checkFileExists()){
                 FileUtils.createDirectory(Path.of("/Users/shepherl/KVN/"));
                 FileUtils.createfiles(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"));
             }
+            try{
+                Files.writeString(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"),"{\n" + //
+                                        "  \"autoStart\": 0,\n" + //
+                                        "  \"Lol\": 2\n" + //
+                                        "}");
+                }catch(IOException e){
+                    e.getMessage();
+                }
         }
 
 
