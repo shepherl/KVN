@@ -13,26 +13,6 @@ public class App {
     private static Process wireproxyProcess = null;
 
     public static void main(String[] args) {
-        System.setProperty("apple.awt.UIElement", "true");
-        Runtime.getRuntime().addShutdownHook(new Thread(App::stopWireproxy));
-
-        if (!SystemTray.isSupported()) return;
-
-        SystemTray tray = SystemTray.getSystemTray();
-        Image trayImage = loadIcon();
-
-        TrayIcon trayIcon = new TrayIcon(trayImage, "KVN");
-        trayIcon.setImageAutoSize(true);
-
-        PopupMenu menu = new PopupMenu();
-        MenuItem statusItem = new MenuItem("Status: Disconnected");
-        statusItem.setEnabled(false);
-
-        MenuItem connectItem = new MenuItem("Connect VPN");
-        MenuItem disconnectItem = new MenuItem("Disconnect");
-        CheckboxMenuItem autoStatrtCheckbox = new CheckboxMenuItem("Автозапуск",SettingsParser.auto_start());
-        disconnectItem.setEnabled(false);
-
         if (!FileUtils.checkDirectoryExists()) {
             if(!FileUtils.checkFileExists()){
                 FileUtils.createDirectory(Path.of("/Users/shepherl/KVN/"));
@@ -61,6 +41,27 @@ public class App {
                     e.getMessage();
                 }
         }
+        System.setProperty("apple.awt.UIElement", "true");
+        Runtime.getRuntime().addShutdownHook(new Thread(App::stopWireproxy));
+
+        if (!SystemTray.isSupported()) return;
+
+        SystemTray tray = SystemTray.getSystemTray();
+        Image trayImage = loadIcon();
+
+        TrayIcon trayIcon = new TrayIcon(trayImage, "KVN");
+        trayIcon.setImageAutoSize(true);
+
+        PopupMenu menu = new PopupMenu();
+        MenuItem statusItem = new MenuItem("Status: Disconnected");
+        statusItem.setEnabled(false);
+
+        MenuItem connectItem = new MenuItem("Connect VPN");
+        MenuItem disconnectItem = new MenuItem("Disconnect");
+        CheckboxMenuItem autoStatrtCheckbox = new CheckboxMenuItem("Автозапуск",SettingsParser.auto_start());
+        disconnectItem.setEnabled(false);
+
+        
 
 
         autoStatrtCheckbox.addItemListener(e -> {
