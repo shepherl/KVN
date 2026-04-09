@@ -27,11 +27,7 @@ public class App {
 
         MenuItem connectItem = new MenuItem("Connect VPN");
         MenuItem disconnectItem = new MenuItem("Disconnect");
-        if(SettingsParser.auto_start()){
-            CheckboxMenuItem autoStatrtCheckbox = new CheckboxMenuItem("Автозапуск",true);
-        }else{
-            CheckboxMenuItem autoStatrtCheckbox = new CheckboxMenuItem("Автозапуск",false);
-        }
+        CheckboxMenuItem autoStatrtCheckbox = new CheckboxMenuItem("Автозапуск",SettingsParser.auto_start());
         disconnectItem.setEnabled(false);
 
 
@@ -102,7 +98,7 @@ public class App {
             // 1. Поиск папки (Contents/app)
             String appDir = System.getProperty("user.dir");
 
-            // Если мы внутри .app, user.dir часто указывает на Contents/app. 
+            // Если мы внутри .app, user.dir часто указывает на Contents/app.
             // Но если запуск из Терминала, путь может отличаться. Проверим:
             File proxyFile = new File(appDir, "wireproxy");
 
