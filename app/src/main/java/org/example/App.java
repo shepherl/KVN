@@ -39,8 +39,8 @@ public class App {
                 FileUtils.createfiles(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"));
                 try{
                 Files.writeString(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"),"{\n" + //
-                                        "  \"autoStart\": 0,\n" + //
-                                        "  \"Lol\": 2\n" + //
+                                        "\"autoStart\": 0,\n" + //
+                                        "\"Lol\": 2\n" + //
                                         "}");
                 }catch(IOException e){
                     e.getMessage();
