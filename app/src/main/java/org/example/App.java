@@ -4,8 +4,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
+// import java.nio.file.Files;
+ // import java.nio.file.Path;
 
 import javax.imageio.ImageIO;
 
@@ -13,6 +13,7 @@ public class App {
     private static Process wireproxyProcess = null;
 
     public static void main(String[] args) {
+        /* 
         if (!FileUtils.checkDirectoryExists()) {
             if(!FileUtils.checkFileExists()){
                 FileUtils.createDirectory(Path.of("/Users/shepherl/KVN/"));
@@ -44,6 +45,7 @@ public class App {
                 }
                 System.out.println("Все на месте");
         }
+                */
         System.setProperty("apple.awt.UIElement", "true");
         Runtime.getRuntime().addShutdownHook(new Thread(App::stopWireproxy));
 
