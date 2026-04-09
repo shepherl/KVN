@@ -27,15 +27,15 @@ public class App {
 
         MenuItem connectItem = new MenuItem("Connect VPN");
         MenuItem disconnectItem = new MenuItem("Disconnect");
-        disconnectItem.setEnabled(false);
         CheckboxMenuItem autoStatrtCheckbox = new CheckboxMenuItem("Автозапуск",false);
+        disconnectItem.setEnabled(false);
 
-        autoStatrtCheckbox.addActionListener(e ->{
+
+        autoStatrtCheckbox.addActionListener(e -> {
             boolean status = autoStatrtCheckbox.getState();
             if(status){
                 FileUtils.AutoStartStatusrWrite(true);
             }else{
-                System.out.println("Включен");
                 FileUtils.AutoStartStatusrWrite(false);
             }
 
