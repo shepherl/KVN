@@ -36,11 +36,11 @@ public class FileUtils {
         try{
             if(start_status){
             content = Files.readString(path);
-            content = content.replace("\"autoStatrt\": 0", "\"autoStart\": 1");
+            content = content.replace("\"autoStart\": 0", "\"autoStart\": 1");
             Files.writeString(path,content);
             }else{
                 content = Files.readString(path);
-                content = content.replace("\"autoStatrt\": 1", "\"autoStart\": 0");
+                content = content.replace("\"autoStart\": 1", "\"autoStart\": 0");
                 Files.writeString(path,content);
                 System.out.println("Работай !!!!!");
             }
