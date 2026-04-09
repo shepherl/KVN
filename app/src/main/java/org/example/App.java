@@ -31,7 +31,7 @@ public class App {
         disconnectItem.setEnabled(false);
 
 
-        autoStatrtCheckbox.addActionListener(e -> {
+        autoStatrtCheckbox.addItemListener(e -> {
             boolean status = autoStatrtCheckbox.getState();
             if(status){
                 FileUtils.AutoStartStatusrWrite(true);
