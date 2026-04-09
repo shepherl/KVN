@@ -31,7 +31,12 @@ public class App {
         CheckboxMenuItem autoStatrtCheckbox = new CheckboxMenuItem("Автозапуск",false);
 
         autoStatrtCheckbox.addActionListener(e ->{
-            System.out.println("Работает чекбокс");
+            boolean status = autoStatrtCheckbox.getState();
+            if(status){
+            System.out.println("Выключен");
+            }else{
+                System.out.println("Включен");
+            }
 
         });
 
