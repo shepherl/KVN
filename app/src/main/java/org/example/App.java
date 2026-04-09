@@ -4,6 +4,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URL;
+import java.nio.file.Path;
+
 import javax.imageio.ImageIO;
 
 public class App {
@@ -18,7 +20,7 @@ public class App {
         SystemTray tray = SystemTray.getSystemTray();
         Image trayImage = loadIcon();
 
-        TrayIcon trayIcon = new TrayIcon(trayImage, "KVN Status Tool");
+        TrayIcon trayIcon = new TrayIcon(trayImage, "KVN");
         trayIcon.setImageAutoSize(true);
 
         PopupMenu menu = new PopupMenu();
@@ -29,6 +31,18 @@ public class App {
         MenuItem disconnectItem = new MenuItem("Disconnect");
         CheckboxMenuItem autoStatrtCheckbox = new CheckboxMenuItem("Автозапуск",SettingsParser.auto_start());
         disconnectItem.setEnabled(false);
+
+        if (!FileUtils.checkDirectoryExists()) {
+            if(!FileUtils.checkFileExists()){
+                FileUtils.createDirectory(Path.of("/Users/shepherl/KVN/"));
+                FileUtils.createfiles(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"));
+            }
+        }else{
+            if(!FileUtils.checkFileExists()){
+                FileUtils.createDirectory(Path.of("/Users/shepherl/KVN/"));
+                FileUtils.createfiles(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"));
+            }
+        }
 
 
         autoStatrtCheckbox.addItemListener(e -> {
@@ -42,6 +56,13 @@ public class App {
             }
 
         });
+
+       
+        
+
+
+        
+
 
         // Логика работы автозапуска vpn при запуске утилиты
         if(SettingsParser.auto_start()){ // Проверка наличия автозапуска

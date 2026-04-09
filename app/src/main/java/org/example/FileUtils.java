@@ -12,8 +12,8 @@ import java.nio.file.Path;
 public class FileUtils {
 
     public static boolean checkDirectoryExists(){ // Метод проверки существования директории
-        File files = new File("base.json");
-        if(files.exists()&& files.isDirectory()){ // Проверка существования директораии и проверка это папка или файл
+        Path path = Path.of("/Users/shepherl/KVN");
+        if(Files.exists(path)&& Files.isDirectory(path)){ // Проверка существования директораии и проверка это папка или файл
             return true;
         }else{
             return false;
@@ -22,12 +22,29 @@ public class FileUtils {
     }
 
     public static boolean checkFileExists(){ // Метод проверки файла
-        File files = new File("");
-        if(files.exists()&& files.isDirectory()){ // Проверка существования директории и проверка это папка или файл
-            return true;
-        }else{
-            return false;
+        Path path = Path.of("/Users/shepherl/KVN/AutoStartStatus.json");
+            if(Files.exists(path)){ // Проверка существования директории и проверка это папка или файл
+                return true;
+            }else{
+                return false;
         }
+    }
+
+    public static void createfiles(Path path){ // Тут path требует указание пути + название файла
+        try{
+            Files.createFile(path);
+        }catch(IOException e){
+            e.getMessage();
+        }
+
+    }
+
+    public static void createDirectory(Path path){ // Создание директории. Тут достаточно указать путь
+            try{
+            Files.createDirectory(path);
+            }catch(IOException e){
+                e.getMessage();
+            }
     }
 
     public static void AutoStartStatusrWrite(boolean start_status){ // Метод для изменения  AutoStartFile
