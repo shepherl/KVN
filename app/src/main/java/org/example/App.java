@@ -27,8 +27,10 @@ public class App {
                     e.getMessage();
                 }
             }
+            System.out.println("Файла нет 2");
         }else{
             if(!FileUtils.checkFileExists()){
+                System.out.println("Файла нет 3");
                 FileUtils.createDirectory(Path.of("/Users/shepherl/KVN/"));
                 FileUtils.createfiles(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"));
             }
@@ -40,6 +42,7 @@ public class App {
                 }catch(IOException e){
                     e.getMessage();
                 }
+                
         }
         System.setProperty("apple.awt.UIElement", "true");
         Runtime.getRuntime().addShutdownHook(new Thread(App::stopWireproxy));
