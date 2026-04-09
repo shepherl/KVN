@@ -30,6 +30,11 @@ public class App {
         disconnectItem.setEnabled(false);
         CheckboxMenuItem autoStatrtCheckbox = new CheckboxMenuItem("Автозапуск",false);
 
+        autoStatrtCheckbox.addActionListener(e ->{
+            System.out.println("Работает чекбокс");
+
+        });
+
         // Логика работы автозапуска vpn при запуске утилиты
         if(SettingsParser.auto_start()){ // Проверка наличия автозапуска
             if (startWireproxy()) {

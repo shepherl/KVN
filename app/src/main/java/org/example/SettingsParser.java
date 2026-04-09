@@ -25,7 +25,7 @@ public class SettingsParser { // Парсер значений из json
 
     public static boolean auto_start(){ // Проверка значения автозапуска в файле
 
-        Path path = Path.of("/Users/shepherl/KVN/base.json");
+        Path path = Path.of("/Users/shepherl/KVN/AutoStartStatus.json");
         String content;
         try{
             content = Files.readString(path);
@@ -36,7 +36,7 @@ public class SettingsParser { // Парсер значений из json
             }
 
         }catch(IOException e){
-            System.out.println("Ошибка чтения файла конфига");
+            System.out.println("Ошибка чтения файла конфига(При проверке статуса автозапуска)");
             e.printStackTrace();
             return false;
         }

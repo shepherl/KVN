@@ -5,6 +5,9 @@
 package org.example;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class FileUtils {
 
@@ -19,12 +22,32 @@ public class FileUtils {
     }
 
     public static boolean checkFileExists(){ // Метод проверки файла
-        File files = new File("base.json");
+        File files = new File("");
         if(files.exists()&& files.isDirectory()){ // Проверка существования директории и проверка это папка или файл
             return true;
         }else{
             return false;
         }
+    }
+
+    public static void AutoStartStatusrWrite(boolean start_status){ // Метод для изменения  AutoStartFile
+        Path path = Path.of("/Users/shepherl/KVN/AutoStartStatus.json");
+        String content;
+        try{
+            if(start_status){
+            content = Files.readString(path);
+            content = content.replace("\"autoStatrt\": 0", "\"autoStart\": 1");
+            }else{
+                content = Files.readString(path);
+                content = content.replace("\"autoStatrt\": 1", "\"autoStart\": 0");
+            }
+
+
+        }catch(IOException e){
+            e.printStackTrace();
+
+        }
+
     }
 
 }
