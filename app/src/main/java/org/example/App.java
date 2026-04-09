@@ -67,6 +67,18 @@ public class App {
             }
         });
         }
+        connectItem.addActionListener(e -> {
+            statusItem.setLabel("Status: Connecting...");
+
+            // Сначала пробуем запустить наш Go бинарник
+            if (startWireproxy()) {
+                statusItem.setLabel("Status: Connected (Go Active)");
+                connectItem.setEnabled(false);
+                disconnectItem.setEnabled(true);
+            } else {
+                System.out.println("Ошибка запуска утилиты");
+            }
+        });
 
         disconnectItem.addActionListener(e -> {
             stopWireproxy();
