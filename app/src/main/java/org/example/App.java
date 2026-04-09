@@ -34,9 +34,11 @@ public class App {
         autoStatrtCheckbox.addItemListener(e -> {
             boolean status = autoStatrtCheckbox.getState();
             if(status){
-                FileUtils.AutoStartStatusrWrite(true);
+                //FileUtils.AutoStartStatusrWrite(true);
+                System.out.println("Включено");
             }else{
-                FileUtils.AutoStartStatusrWrite(false);
+                //FileUtils.AutoStartStatusrWrite(false);
+                System.out.println("Отключено");
             }
 
         });
