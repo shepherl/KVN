@@ -15,8 +15,8 @@ public class App {
     public static void main(String[] args) {
 
         if (!FileUtils.checkDirectoryExists()) {
+            FileUtils.createDirectory(Path.of("/Users/shepherl/KVN/"));
             if(!Files.exists(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"))){ // Проверка существования файла
-                FileUtils.createDirectory(Path.of("/Users/shepherl/KVN/"));
                 FileUtils.createfiles(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"));
                 try{
                 System.out.println("Файла нет");
@@ -28,11 +28,13 @@ public class App {
                     e.getMessage();
                 }
             }
-            System.out.println("Файла нет 2");
+            if(Files.exists(Path.of("/Users/shepherl/KVN/proxy.conf"))){
+                FileUtils.copyFile(Path.of("app/proxy.conf"),Path.of("/Users/shepherl/KVN/proxy.conf"));
+            }
+
         }else{
             if(!Files.exists(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"))){ // Проверка существования файла
-                System.out.println("Файла нет 3");
-                FileUtils.createDirectory(Path.of("/Users/shepherl/KVN/"));
+
                 FileUtils.createfiles(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"));
                 try{
                 Files.writeString(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"),"{\n" + //
@@ -43,8 +45,11 @@ public class App {
                     e.getMessage();
                 }
             }
+            if(Files.exists(Path.of("/Users/shepherl/KVN/proxy.conf"))){
+                FileUtils.copyFile(Path.of("app/proxy.conf"),Path.of("/Users/shepherl/KVN/proxy.conf"));
+            }
 
-                System.out.println("Все на месте");
+
         }
 
         System.setProperty("apple.awt.UIElement", "true");
