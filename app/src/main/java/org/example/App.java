@@ -84,13 +84,12 @@ public class App {
         });
 
        addFileAndRemove.addActionListener(e->{
-        FileDialog fd = new FileDialog((Frame)null,"Выберите файл", FileDialog.LOAD);
-        fd.setVisible(true);
-
-        String directory = fd.getDirectory();
-        String filename = fd.getFile();
 
         if(addFileAndRemove.getLabel().equals("Вставить файл...")){
+            FileDialog fd = new FileDialog((Frame)null,"Выберите файл", FileDialog.LOAD);
+            fd.setVisible(true);
+            String directory = fd.getDirectory();
+            String filename = fd.getFile();
             String fullPath = directory + filename;
             System.out.println("Выбран файл " + fullPath);
             //FileUtils.copyFile("","");
