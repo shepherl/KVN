@@ -86,13 +86,15 @@ public class App {
        addFileAndRemove.addActionListener(e->{
 
         if(addFileAndRemove.getLabel().equals("Вставить файл...")){
+            String userName = System.getProperty("user.name");
+            System.out.println(userName);
             FileDialog fd = new FileDialog((Frame)null,"Выберите файл", FileDialog.LOAD);
             fd.setVisible(true);
             String directory = fd.getDirectory();
             String filename = fd.getFile();
             String fullPath = directory + filename;
             FileUtils.copyFile(Path.of(fullPath),Path.of("/Users/shepherl/KVN/AmneziaConfig.json"));
-            System.out.println("Выбран файл " + fullPath);
+            //System.out.println("Выбран файл " + fullPath);
             //FileUtils.copyFile("","");
        addFileAndRemove.setLabel("Удалить файл...");
         }else{
