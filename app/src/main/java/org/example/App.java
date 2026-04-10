@@ -93,13 +93,13 @@ public class App {
             String directory = fd.getDirectory();
             String filename = fd.getFile();
             String fullPath = directory + filename;
-            FileUtils.copyFile(Path.of(fullPath),Path.of("/Users/shepherl/KVN/AmneziaConfig.json"));
+            FileUtils.copyFile(Path.of(fullPath),Path.of("/Users/shepherl/KVN/AmneziaConfig.conf"));
             //System.out.println("Выбран файл " + fullPath);
             //FileUtils.copyFile("","");
        addFileAndRemove.setLabel("Удалить файл...");
         }else{
             try{
-                Files.delete(Path.of("/Users/shepherl/KVN/AmneziaConfig.json"));
+                Files.delete(Path.of("/Users/shepherl/KVN/AmneziaConfig.conf"));
             }catch(IOException a){
             a.getMessage();
 
@@ -115,7 +115,7 @@ public class App {
 
 
         // Логика работы автозапуска vpn при запуске утилиты
-        if(SettingsParser.auto_start()){ // Проверка наличия автозапуска
+        if(SettingsParser.auto_start()&&Files.exists(Path.of("/Users/shepherl/KVN/AmneziaConfig.conf"))){ // Проверка наличия автозапуска
             if (startWireproxy()) {
                 statusItem.setLabel("Status: Connected (Go Active)");
                 connectItem.setEnabled(false);
