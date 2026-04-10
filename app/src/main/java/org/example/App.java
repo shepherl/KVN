@@ -14,6 +14,7 @@ public class App {
 
     public static void main(String[] args) {
 
+
         if (!FileUtils.checkDirectoryExists()) {
             FileUtils.createDirectory(Path.of("/Users/shepherl/KVN/"));
             if(!Files.exists(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"))){ // Проверка существования файла
@@ -56,7 +57,7 @@ public class App {
             if(!Files.exists(Path.of("/Users/shepherl/KVN/proxy.conf"))){
                 FileUtils.createfiles(Path.of("/Users/shepherl/KVN/proxy.conf"));
                 try{
-                Files.writeString(Path.of("/Users/shepherl/KVN/proxy.conf"),"WGConfig = WARPw13768.conf\r\n" + //
+                Files.writeString(Path.of("/Users/shepherl/KVN/proxy.conf"),"WGConfig = /Users/shepherl/KVN/AmneziaConfig.conf\r\n" + //
                                         "\r\n" + //
                                         "[Socks5]\r\n" + //
                                         "BindAddress = 127.0.0.1:1080");
@@ -237,7 +238,7 @@ public class App {
 
             // 3. Запуск
             // Важно: передаем рабочую директорию, чтобы он нашел proxy.conf рядом
-            ProcessBuilder pb = new ProcessBuilder(proxyFile.getAbsolutePath(), "-c", "proxy.conf");
+            ProcessBuilder pb = new ProcessBuilder(proxyFile.getAbsolutePath(), "-c", "/Users/shepherl/KVN/proxy.conf");
             pb.directory(new File(appDir));
             pb.redirectErrorStream(true);
 
