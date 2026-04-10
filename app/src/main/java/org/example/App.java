@@ -46,7 +46,7 @@ public class App {
                 }
             }
             if(Files.exists(Path.of("/Users/shepherl/KVN/proxy.conf"))){
-                FileUtils.copyFile(Path.of("app/proxy.conf"),Path.of("/Users/shepherl/KVN/proxy.conf"));
+                FileUtils.copyFile(Path.of("Contents/app/proxy.conf"),Path.of("/Users/shepherl/KVN/proxy.conf"));
             }
 
 
