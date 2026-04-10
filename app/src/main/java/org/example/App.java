@@ -13,9 +13,9 @@ public class App {
     private static Process wireproxyProcess = null;
 
     public static void main(String[] args) {
-        
+
         if (!FileUtils.checkDirectoryExists()) {
-            if(!FileUtils.checkFileExists()){
+            if(!Files.exists(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"))){ // Проверка существования файла
                 FileUtils.createDirectory(Path.of("/Users/shepherl/KVN/"));
                 FileUtils.createfiles(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"));
                 try{
@@ -30,7 +30,7 @@ public class App {
             }
             System.out.println("Файла нет 2");
         }else{
-            if(!FileUtils.checkFileExists()){
+            if(!Files.exists(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"))){ // Проверка существования файла
                 System.out.println("Файла нет 3");
                 FileUtils.createDirectory(Path.of("/Users/shepherl/KVN/"));
                 FileUtils.createfiles(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"));
@@ -43,10 +43,10 @@ public class App {
                     e.getMessage();
                 }
             }
-            
+
                 System.out.println("Все на месте");
         }
-                
+
         System.setProperty("apple.awt.UIElement", "true");
         Runtime.getRuntime().addShutdownHook(new Thread(App::stopWireproxy));
 
@@ -65,6 +65,7 @@ public class App {
         MenuItem connectItem = new MenuItem("Connect VPN");
         MenuItem disconnectItem = new MenuItem("Disconnect");
         CheckboxMenuItem autoStatrtCheckbox = new CheckboxMenuItem("Автозапуск",SettingsParser.auto_start());
+        MenuItem addFileAndRemove = new MenuItem("Вставить файл...");
         disconnectItem.setEnabled(false);
 
         
@@ -82,11 +83,17 @@ public class App {
 
         });
 
-       
-        
+       addFileAndRemove.addActionListener(e->{
+        if(addFileAndRemove.getLabel().equals("Вставить файл...")){
+       addFileAndRemove.setLabel("Удалить файл...");
+        }else{
+        addFileAndRemove.setLabel("Вставить файл...");
+        }
+       });
 
 
-        
+
+
 
 
         // Логика работы автозапуска vpn при запуске утилиты
@@ -144,6 +151,7 @@ public class App {
         menu.add(connectItem);
         menu.add(disconnectItem);
         menu.add(autoStatrtCheckbox); // Чекбокс автозапуска
+        menu.add(addFileAndRemove);
         menu.addSeparator();
         menu.add(exitItem);
 
