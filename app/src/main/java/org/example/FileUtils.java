@@ -23,14 +23,7 @@ public class FileUtils {
 
     }
 
-    public static boolean checkFileExists(){ // Метод проверки файла
-        Path path = Path.of("/Users/shepherl/KVN/AutoStartStatus.json");
-            if(Files.exists(path)){ // Проверка проверка существование файла
-                return true;
-            }else{
-                return false;
-        }
-    }
+
 
     public static void createfiles(Path path){ // Тут path требует указание пути + название файла
         try{
