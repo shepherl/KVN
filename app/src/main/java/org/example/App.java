@@ -68,7 +68,7 @@ public class App {
         MenuItem addFileAndRemove = new MenuItem("Вставить файл...");
         disconnectItem.setEnabled(false);
 
-        
+
 
 
         autoStatrtCheckbox.addItemListener(e -> {
@@ -96,7 +96,14 @@ public class App {
             //FileUtils.copyFile("","");
        addFileAndRemove.setLabel("Удалить файл...");
         }else{
-        addFileAndRemove.setLabel("Вставить файл...");
+            try{
+                Files.delete(Path.of("/Users/shepherl/KVN/AmneziaConfig.json"));
+            }catch(IOException a){
+            a.getMessage();
+
+            }
+
+            addFileAndRemove.setLabel("Вставить файл...");
         }
        });
 
