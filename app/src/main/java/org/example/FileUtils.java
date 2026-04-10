@@ -64,8 +64,7 @@ public class FileUtils {
         }
 
     }
-     public static void copyFile(Path path){
-        Path pathCopy = Paths.get("Amnezia_Config.json");
+     public static void copyFile(Path path,Path pathCopy){
         try{
         Files.copy(path, pathCopy, StandardCopyOption.REPLACE_EXISTING);
         }catch(IOException e){
