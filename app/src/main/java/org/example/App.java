@@ -28,7 +28,7 @@ public class App {
                     e.getMessage();
                 }
             }
-            if(Files.exists(Path.of("/Users/shepherl/KVN/proxy.conf"))){
+            if(!Files.exists(Path.of("/Users/shepherl/KVN/proxy.conf"))){
                 FileUtils.createfiles(Path.of("/Users/shepherl/KVN/proxy.conf"));
                 try{
                 Files.writeString(Path.of("/Users/shepherl/KVN/proxy.conf"),"WGConfig = WARPw13768.conf\r\n" + //
@@ -53,7 +53,7 @@ public class App {
                     e.getMessage();
                 }
             }
-            if(Files.exists(Path.of("/Users/shepherl/KVN/proxy.conf"))){
+            if(!Files.exists(Path.of("/Users/shepherl/KVN/proxy.conf"))){
                 FileUtils.createfiles(Path.of("/Users/shepherl/KVN/proxy.conf"));
                 try{
                 Files.writeString(Path.of("/Users/shepherl/KVN/proxy.conf"),"WGConfig = WARPw13768.conf\r\n" + //
