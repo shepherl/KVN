@@ -65,7 +65,13 @@ public class App {
         MenuItem connectItem = new MenuItem("Connect VPN");
         MenuItem disconnectItem = new MenuItem("Disconnect");
         CheckboxMenuItem autoStatrtCheckbox = new CheckboxMenuItem("Автозапуск",SettingsParser.auto_start());
-        MenuItem addFileAndRemove = new MenuItem("Вставить файл...");
+            String AddFileButtonText;
+        if(Files.exists(Path.of("/Users/shepherl/KVN/AmneziaConfig.conf"))){
+            AddFileButtonText = "Удалить файл...";
+        }else{
+            AddFileButtonText = "Вставить файл...";
+        }
+        MenuItem addFileAndRemove = new MenuItem(AddFileButtonText);
         disconnectItem.setEnabled(false);
 
 
