@@ -29,7 +29,15 @@ public class App {
                 }
             }
             if(Files.exists(Path.of("/Users/shepherl/KVN/proxy.conf"))){
-                FileUtils.copyFile(Path.of("app/proxy.conf"),Path.of("/Users/shepherl/KVN/proxy.conf"));
+                FileUtils.createfiles(Path.of("/Users/shepherl/KVN/proxy.conf"));
+                try{
+                Files.writeString(Path.of("/Users/shepherl/KVN/proxy.conf"),"WGConfig = WARPw13768.conf\r\n" + //
+                                        "\r\n" + //
+                                        "[Socks5]\r\n" + //
+                                        "BindAddress = 127.0.0.1:1080");
+                }catch(IOException t){
+                    t.getMessage();
+                }
             }
 
         }else{
@@ -46,7 +54,15 @@ public class App {
                 }
             }
             if(Files.exists(Path.of("/Users/shepherl/KVN/proxy.conf"))){
-                FileUtils.copyFile(Path.of("Contents/app/proxy.conf"),Path.of("/Users/shepherl/KVN/proxy.conf"));
+                FileUtils.createfiles(Path.of("/Users/shepherl/KVN/proxy.conf"));
+                try{
+                Files.writeString(Path.of("/Users/shepherl/KVN/proxy.conf"),"WGConfig = WARPw13768.conf\r\n" + //
+                                        "\r\n" + //
+                                        "[Socks5]\r\n" + //
+                                        "BindAddress = 127.0.0.1:1080");
+                }catch(IOException t){
+                    t.getMessage();
+                }
             }
 
 
