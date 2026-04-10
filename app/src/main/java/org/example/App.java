@@ -91,6 +91,7 @@ public class App {
             String directory = fd.getDirectory();
             String filename = fd.getFile();
             String fullPath = directory + filename;
+            FileUtils.copyFile(Path.of(fullPath),Path.of("/Users/shepherl/KVN/AmneziaConfig.json"));
             System.out.println("Выбран файл " + fullPath);
             //FileUtils.copyFile("","");
        addFileAndRemove.setLabel("Удалить файл...");
