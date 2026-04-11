@@ -141,9 +141,10 @@ public class App {
 
 
 
-
+        int coun = 0;
         // Логика работы автозапуска vpn при запуске утилиты
-         if(SettingsParser.auto_start()&&Files.exists(Path.of("/Users/shepherl/KVN/proxy.conf"))&&Files.exists(Path.of("/Users/shepherl/KVN/AmneziaConfig.conf"))){ // Проверка наличия автозапуска
+         if(count == 0 && SettingsParser.auto_start()&&Files.exists(Path.of("/Users/shepherl/KVN/proxy.conf"))&&Files.exists(Path.of("/Users/shepherl/KVN/AmneziaConfig.conf"))){ // Проверка наличия автозапуска
+            coun = 1;
             if (startWireproxy()) {
                 statusItem.setLabel("Status: Connected (Go Active)");
                 connectItem.setEnabled(false);
