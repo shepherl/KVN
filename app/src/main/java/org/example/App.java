@@ -137,6 +137,16 @@ public class App {
             addFileAndRemove.setLabel("Вставить файл...");
         }
        });
+       disconnectItem.addActionListener(e -> {
+            stopWireproxy();
+            statusItem.setLabel("Status: Disconnected");
+            connectItem.setEnabled(true);
+            disconnectItem.setEnabled(false);
+        });
+        exitItem.addActionListener(e -> {
+            stopWireproxy();
+            System.exit(0);
+        });
 
 
 
@@ -165,28 +175,10 @@ public class App {
                 System.out.println("Ошибка запуска утилиты");
             }
         });
-        disconnectItem.addActionListener(e -> {
-            stopWireproxy();
-            statusItem.setLabel("Status: Disconnected");
-            connectItem.setEnabled(true);
-            disconnectItem.setEnabled(false);
-        });
-        exitItem.addActionListener(e -> {
-            stopWireproxy();
-            System.exit(0);
-        });
+        
         }
 
-        disconnectItem.addActionListener(e -> {
-            stopWireproxy();
-            statusItem.setLabel("Status: Disconnected");
-            connectItem.setEnabled(true);
-            disconnectItem.setEnabled(false);
-        });
-        exitItem.addActionListener(e -> {
-            stopWireproxy();
-            System.exit(0);
-        });
+        
 
 
 
