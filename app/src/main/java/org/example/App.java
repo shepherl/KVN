@@ -13,15 +13,17 @@ public class App {
     private static Process wireproxyProcess = null;
 
     public static void main(String[] args) {
+        String userName = System.getProperty("user.name");
+        String configPath = "/Users/" + userName + "/KVN/";
 
 
         if (!FileUtils.checkDirectoryExists()) {
-            FileUtils.createDirectory(Path.of("/Users/shepherl/KVN/"));
-            if(!Files.exists(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"))){ // Проверка существования файла
-                FileUtils.createfiles(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"));
+            FileUtils.createDirectory(Path.of(configPath));
+            if(!Files.exists(Path.of(configPath + "AutoStartStatus.json"))){ // Проверка существования файла
+                FileUtils.createfiles(Path.of(configPath + "AutoStartStatus.json"));
                 try{
                 System.out.println("Файла нет");
-                Files.writeString(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"),"{\n" + //
+                Files.writeString(Path.of(configPath + "AutoStartStatus.json"),"{\n" + //
                                         "\"autoStart\": 0,\n" + //
                                         "\"Lol\": 2\n" + //
                                         "}");
@@ -29,10 +31,10 @@ public class App {
                     e.getMessage();
                 }
             }
-            if(!Files.exists(Path.of("/Users/shepherl/KVN/proxy.conf"))){
-                FileUtils.createfiles(Path.of("/Users/shepherl/KVN/proxy.conf"));
+            if(!Files.exists(Path.of(configPath+ "proxy.conf"))){
+                FileUtils.createfiles(Path.of(configPath + "proxy.conf"));
                 try{
-                Files.writeString(Path.of("/Users/shepherl/KVN/proxy.conf"),"WGConfig = WARPw13768.conf\r\n" + //
+                Files.writeString(Path.of(configPath + "proxy.conf"),"WGConfig = WARPw13768.conf\r\n" + //
                                         "\r\n" + //
                                         "[Socks5]\r\n" + //
                                         "BindAddress = 127.0.0.1:1080");
@@ -42,11 +44,11 @@ public class App {
             }
 
         }else{
-            if(!Files.exists(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"))){ // Проверка существования файла
+            if(!Files.exists(Path.of(configPath + "AutoStartStatus.json"))){ // Проверка существования файла
 
-                FileUtils.createfiles(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"));
+                FileUtils.createfiles(Path.of(configPath + "AutoStartStatus.json"));
                 try{
-                Files.writeString(Path.of("/Users/shepherl/KVN/AutoStartStatus.json"),"{\n" + //
+                Files.writeString(Path.of(configPath + "AutoStartStatus.json"),"{\n" + //
                                         " \"autoStart\": 0,\n" + //
                                         " \"Lol\": 2\n" + //
                                         "}");
@@ -54,10 +56,10 @@ public class App {
                     e.getMessage();
                 }
             }
-            if(!Files.exists(Path.of("/Users/shepherl/KVN/proxy.conf"))){
-                FileUtils.createfiles(Path.of("/Users/shepherl/KVN/proxy.conf"));
+            if(!Files.exists(Path.of(configPath + "proxy.conf"))){
+                FileUtils.createfiles(Path.of(configPath + "proxy.conf"));
                 try{
-                Files.writeString(Path.of("/Users/shepherl/KVN/proxy.conf"),"WGConfig = /Users/shepherl/KVN/AmneziaConfig.conf\r\n" + //
+                Files.writeString(Path.of(configPath + "proxy.conf"),"WGConfig = " + configPath +"AmneziaConfig.conf\r\n" + //
                                         "\r\n" + //
                                         "[Socks5]\r\n" + //
                                         "BindAddress = 127.0.0.1:1080");
@@ -115,20 +117,19 @@ public class App {
        addFileAndRemove.addActionListener(e->{
 
         if(addFileAndRemove.getLabel().equals("Вставить файл...")){
-            String userName = System.getProperty("user.name");
-            System.out.println(userName);
+
             FileDialog fd = new FileDialog((Frame)null,"Выберите файл", FileDialog.LOAD);
             fd.setVisible(true);
             String directory = fd.getDirectory();
             String filename = fd.getFile();
             String fullPath = directory + filename;
-            FileUtils.copyFile(Path.of(fullPath),Path.of("/Users/shepherl/KVN/AmneziaConfig.conf"));
+            FileUtils.copyFile(Path.of(fullPath),Path.of(configPath + "AmneziaConfig.conf"));
             //System.out.println("Выбран файл " + fullPath);
             //FileUtils.copyFile("","");
        addFileAndRemove.setLabel("Удалить файл...");
         }else{
             try{
-                Files.delete(Path.of("/Users/shepherl/KVN/AmneziaConfig.conf"));
+                Files.delete(Path.of(configPath + "AmneziaConfig.conf"));
             }catch(IOException a){
             a.getMessage();
 
@@ -165,7 +166,7 @@ public class App {
 
 
         // Логика работы автозапуска vpn при запуске утилиты
-         if(SettingsParser.auto_start()&&Files.exists(Path.of("/Users/shepherl/KVN/proxy.conf"))&&Files.exists(Path.of("/Users/shepherl/KVN/AmneziaConfig.conf"))){ // Проверка наличия автозапуска
+         if(SettingsParser.auto_start()&&Files.exists(Path.of(configPath + "proxy.conf"))&&Files.exists(Path.of(configPath + "AmneziaConfig.conf"))){ // Проверка наличия автозапуска
             if (startWireproxy()) {
                 statusItem.setLabel("Status: Connected (Go Active)");
                 connectItem.setEnabled(false);
@@ -197,6 +198,8 @@ public class App {
     }
 
     private static boolean startWireproxy() {
+        String userName = System.getProperty("user.name");
+        String configPath = "/Users/" + userName + "/KVN/";
         try {
             // 1. Поиск папки (Contents/app)
             String appDir = System.getProperty("user.dir");
@@ -229,7 +232,8 @@ public class App {
 
             // 3. Запуск
             // Важно: передаем рабочую директорию, чтобы он нашел proxy.conf рядом
-            ProcessBuilder pb = new ProcessBuilder(proxyFile.getAbsolutePath(), "-c", "/Users/shepherl/KVN/proxy.conf");
+
+            ProcessBuilder pb = new ProcessBuilder(proxyFile.getAbsolutePath(), "-c", configPath + "proxy.conf");
             pb.directory(new File(appDir));
             pb.redirectErrorStream(true);
 

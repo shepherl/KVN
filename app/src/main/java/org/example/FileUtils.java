@@ -14,7 +14,9 @@ import java.nio.file.StandardCopyOption;
 public class FileUtils {
 
     public static boolean checkDirectoryExists(){ // Метод проверки существования директории
-        Path path = Path.of("/Users/shepherl/KVN");
+        String userName = System.getProperty("user.name");
+        String configPath = "/Users/" + userName + "/KVN/";
+        Path path = Path.of(configPath);
         if(Files.exists(path)&& Files.isDirectory(path)){ // Проверка существования директораии и проверка это папка или файл
             return true;
         }else{
@@ -42,8 +44,10 @@ public class FileUtils {
             }
     }
 
-    public static void AutoStartStatusrWrite(boolean start_status){ // Метод для изменения  AutoStartFile
-        Path path = Path.of("/Users/shepherl/KVN/AutoStartStatus.json");
+    public static void AutoStartStatusrWrite(boolean start_status){ // Метод для изменения  AutoStartFil
+        String userName = System.getProperty("user.name");
+        String configPath = "/Users/" + userName + "/KVN/";
+        Path path = Path.of(configPath + "AutoStartStatus.json");
         String content;
         try{
             if(start_status){

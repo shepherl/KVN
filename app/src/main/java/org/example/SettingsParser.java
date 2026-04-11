@@ -24,8 +24,10 @@ public class SettingsParser { // Парсер значений из json
 
 
     public static boolean auto_start(){ // Проверка значения автозапуска в файле
+        String userName = System.getProperty("user.name");
+        String configPath = "/Users/" + userName + "/KVN/";
 
-        Path path = Path.of("/Users/shepherl/KVN/AutoStartStatus.json");
+        Path path = Path.of(configPath + "AutoStartStatus.json");
         String content;
         try{
             content = Files.readString(path);
