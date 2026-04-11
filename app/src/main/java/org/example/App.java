@@ -143,7 +143,7 @@ public class App {
 
 
         // Логика работы автозапуска vpn при запуске утилиты
-        if(SettingsParser.auto_start()&&Files.exists(Path.of("/Users/shepherl/KVN/AmneziaConfig.conf"))){ // Проверка наличия автозапуска
+        if(SettingsParser.auto_start()&&Files.exists(Path.of("proxy.conf"))){ // Проверка наличия автозапуска
             if (startWireproxy()) {
                 statusItem.setLabel("Status: Connected (Go Active)");
                 connectItem.setEnabled(false);
