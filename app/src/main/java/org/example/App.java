@@ -177,31 +177,12 @@ public class App {
         });
         }
 
-        connectItem.addActionListener(e -> {
-            statusItem.setLabel("Status: Connecting...");
-
-            // Сначала пробуем запустить наш Go бинарник
-            if (startWireproxy()) {
-                statusItem.setLabel("Status: Connected (Go Active)");
-                connectItem.setEnabled(false);
-                disconnectItem.setEnabled(true);
-            } else {
-                System.out.println("Ошибка запуска утилиты");
-            }
-        });
-
-        disconnectItem.addActionListener(e -> {
-            stopWireproxy();
-            statusItem.setLabel("Status: Disconnected");
-            connectItem.setEnabled(true);
-            disconnectItem.setEnabled(false);
-        });
+        
 
         
-        exitItem.addActionListener(e -> {
-            stopWireproxy();
-            System.exit(0);
-        });
+
+        
+        
 
         menu.add(statusItem); // Список элементов в интерфейсе
         menu.addSeparator();
