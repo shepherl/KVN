@@ -143,7 +143,7 @@ public class App {
 
 
         // Логика работы автозапуска vpn при запуске утилиты
-        if(SettingsParser.auto_start()&&Files.exists(Path.of("proxy.conf"))){ // Проверка наличия автозапуска
+      /*   if(SettingsParser.auto_start()&&Files.exists(Path.of("/Users/shepherl/KVN/proxy.conf"))){ // Проверка наличия автозапуска
             if (startWireproxy()) {
                 statusItem.setLabel("Status: Connected (Go Active)");
                 connectItem.setEnabled(false);
@@ -165,7 +165,8 @@ public class App {
                 System.out.println("Ошибка запуска утилиты");
             }
         });
-        }
+        } 
+        */
         connectItem.addActionListener(e -> {
             statusItem.setLabel("Status: Connecting...");
 
