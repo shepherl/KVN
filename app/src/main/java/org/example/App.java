@@ -177,12 +177,18 @@ public class App {
         });
         }
 
-        
+        disconnectItem.addActionListener(e -> {
+            stopWireproxy();
+            statusItem.setLabel("Status: Disconnected");
+            connectItem.setEnabled(true);
+            disconnectItem.setEnabled(false);
+        });
+        exitItem.addActionListener(e -> {
+            stopWireproxy();
+            System.exit(0);
+        });
 
-        
 
-        
-        
 
         menu.add(statusItem); // Список элементов в интерфейсе
         menu.addSeparator();
