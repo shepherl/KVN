@@ -143,7 +143,6 @@ public class App {
 
         // Логика работы автозапуска vpn при запуске утилиты
          if(SettingsParser.auto_start()&&Files.exists(Path.of("/Users/shepherl/KVN/proxy.conf"))&&Files.exists(Path.of("/Users/shepherl/KVN/AmneziaConfig.conf"))){ // Проверка наличия автозапуска
-            System.out.println("Автозапуск запущен");
             if (startWireproxy()) {
                 statusItem.setLabel("Status: Connected (Go Active)");
                 connectItem.setEnabled(false);
@@ -165,6 +164,12 @@ public class App {
                 System.out.println("Ошибка запуска утилиты");
             }
         });
+        disconnectItem.addActionListener(e -> {
+            stopWireproxy();
+            statusItem.setLabel("Status: Disconnected");
+            connectItem.setEnabled(true);
+            disconnectItem.setEnabled(false);
+        })
         } 
         
         connectItem.addActionListener(e -> {
