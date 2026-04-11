@@ -169,7 +169,7 @@ public class App {
             statusItem.setLabel("Status: Disconnected");
             connectItem.setEnabled(true);
             disconnectItem.setEnabled(false);
-        })
+        });
         } 
         
         connectItem.addActionListener(e -> {
