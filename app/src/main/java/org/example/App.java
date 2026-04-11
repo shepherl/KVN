@@ -95,6 +95,7 @@ public class App {
         }
         MenuItem addFileAndRemove = new MenuItem(AddFileButtonText);
         disconnectItem.setEnabled(false);
+        MenuItem exitItem = new MenuItem("Exit");
 
 
 
@@ -170,8 +171,12 @@ public class App {
             connectItem.setEnabled(true);
             disconnectItem.setEnabled(false);
         });
-        } 
-        
+        exitItem.addActionListener(e -> {
+            stopWireproxy();
+            System.exit(0);
+        });
+        }
+
         connectItem.addActionListener(e -> {
             statusItem.setLabel("Status: Connecting...");
 
@@ -192,7 +197,7 @@ public class App {
             disconnectItem.setEnabled(false);
         });
 
-        MenuItem exitItem = new MenuItem("Exit");
+        
         exitItem.addActionListener(e -> {
             stopWireproxy();
             System.exit(0);
