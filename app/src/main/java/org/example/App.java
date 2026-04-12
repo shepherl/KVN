@@ -83,7 +83,7 @@ public class App {
         trayIcon.setImageAutoSize(true);
 
         PopupMenu menu = new PopupMenu();
-        MenuItem statusItem = new MenuItem("Status: Disconnected 🔴");
+        MenuItem statusItem = new MenuItem("Status: Disconnected - 🔴");
         statusItem.setEnabled(false);
 
         MenuItem connectItem = new MenuItem("Connect VPN");
@@ -155,7 +155,7 @@ public class App {
             // Сначала пробуем запустить наш Go бинарник
             if (startWireproxy()) {
                 addFileAndRemove.setEnabled(false); // Далаем кнопку Remove Config не активной
-                statusItem.setLabel("Status: Connected 🟢");
+                statusItem.setLabel("Status: Connected - 🟢");
                 connectItem.setEnabled(false);
                 disconnectItem.setEnabled(true);
             } else {
