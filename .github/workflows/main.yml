@@ -15,12 +15,6 @@ jobs:
           distribution: 'temurin'
           architecture: x64
 
-      - name: Install UPX
-        run: brew install upx
-
-      - name: Compress wireproxy
-        run: upx --best --force-macos input_libs/wireproxy/wireproxy
-
       - name: Make gradlew executable
         run: chmod +x gradlew
 
