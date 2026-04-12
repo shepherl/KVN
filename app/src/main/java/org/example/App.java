@@ -91,9 +91,9 @@ public class App {
         CheckboxMenuItem autoStatrtCheckbox = new CheckboxMenuItem("Автозапуск",SettingsParser.auto_start());
             String AddFileButtonText;
         if(Files.exists(Path.of("/Users/shepherl/KVN/AmneziaConfig.conf"))){
-            AddFileButtonText = "Удалить файл...";
+            AddFileButtonText = "Remove Config";
         }else{
-            AddFileButtonText = "Вставить файл...";
+            AddFileButtonText = "Add Config...";
         }
         MenuItem addFileAndRemove = new MenuItem(AddFileButtonText);
         disconnectItem.setEnabled(false);
@@ -116,7 +116,7 @@ public class App {
 
        addFileAndRemove.addActionListener(e->{
 
-        if(addFileAndRemove.getLabel().equals("Вставить файл...")){
+        if(addFileAndRemove.getLabel().equals("Add Config...")){
 
             FileDialog fd = new FileDialog((Frame)null,"Выберите файл", FileDialog.LOAD);
             fd.setVisible(true);
@@ -126,7 +126,7 @@ public class App {
             FileUtils.copyFile(Path.of(fullPath),Path.of(configPath + "AmneziaConfig.conf"));
             //System.out.println("Выбран файл " + fullPath);
             //FileUtils.copyFile("","");
-       addFileAndRemove.setLabel("Удалить файл...");
+       addFileAndRemove.setLabel("Remove Config");
         }else{
             try{
                 Files.delete(Path.of(configPath + "AmneziaConfig.conf"));
@@ -135,16 +135,18 @@ public class App {
 
             }
 
-            addFileAndRemove.setLabel("Вставить файл...");
+            addFileAndRemove.setLabel("Add Config...");
         }
        });
        disconnectItem.addActionListener(e -> {
+            addFileAndRemove.setEnabled(true); // Делаем кнопку Remove Config активной
             stopWireproxy();
             statusItem.setLabel("Status: Disconnected");
             connectItem.setEnabled(true);
             disconnectItem.setEnabled(false);
         });
         exitItem.addActionListener(e -> {
+            addFileAndRemove.setEnabled(true); // Делаем кнопку Remove Config активной
             stopWireproxy();
             System.exit(0);
         });
@@ -153,6 +155,7 @@ public class App {
 
             // Сначала пробуем запустить наш Go бинарник
             if (startWireproxy()) {
+                addFileAndRemove.setEnabled(false); // Далаем кнопку Remove Config не активной
                 statusItem.setLabel("Status: Connected (Go Active)");
                 connectItem.setEnabled(false);
                 disconnectItem.setEnabled(true);
@@ -168,6 +171,7 @@ public class App {
         // Логика работы автозапуска vpn при запуске утилиты
          if(SettingsParser.auto_start()&&Files.exists(Path.of(configPath + "proxy.conf"))&&Files.exists(Path.of(configPath + "AmneziaConfig.conf"))){ // Проверка наличия автозапуска
             if (startWireproxy()) {
+                addFileAndRemove.setEnabled(false); // Далаем кнопку Remove Config не активной
                 statusItem.setLabel("Status: Connected (Go Active)");
                 connectItem.setEnabled(false);
                 disconnectItem.setEnabled(true);
