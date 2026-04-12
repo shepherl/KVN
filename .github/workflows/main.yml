@@ -34,7 +34,16 @@ jobs:
 
       - name: Create Custom JRE
         run: |
-          jlink --add-modules java.base,java.desktop,java.logging,jdk.crypto.ec \
+          MODULES=$(jdeps --print-module-deps \
+            --ignore-missing-deps \
+            --recursive \
+            --multi-release 21 \
+            --class-path "app/build/libs/*" \
+            app/build/libs/app.jar)
+          
+          echo "Detected modules: $MODULES"
+
+          jlink --add-modules "$MODULES" \
                 --strip-debug \
                 --no-man-pages \
                 --no-header-files \
