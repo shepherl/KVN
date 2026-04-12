@@ -88,7 +88,7 @@ public class App {
 
         MenuItem connectItem = new MenuItem("Connect VPN");
         MenuItem disconnectItem = new MenuItem("Disconnect");
-        CheckboxMenuItem autoStatrtCheckbox = new CheckboxMenuItem("Автозапуск",SettingsParser.auto_start());
+        CheckboxMenuItem autoStatrtCheckbox = new CheckboxMenuItem("Auto Connect",SettingsParser.auto_start());
             String AddFileButtonText;
         if(Files.exists(Path.of("/Users/shepherl/KVN/AmneziaConfig.conf"))){
             AddFileButtonText = "Remove Config";
@@ -118,7 +118,7 @@ public class App {
 
         if(addFileAndRemove.getLabel().equals("Add Config...")){
 
-            FileDialog fd = new FileDialog((Frame)null,"Выберите файл", FileDialog.LOAD);
+            FileDialog fd = new FileDialog((Frame)null,"Add file", FileDialog.LOAD);
             fd.setVisible(true);
             String directory = fd.getDirectory();
             String filename = fd.getFile();
@@ -146,7 +146,6 @@ public class App {
             disconnectItem.setEnabled(false);
         });
         exitItem.addActionListener(e -> {
-            addFileAndRemove.setEnabled(true); // Делаем кнопку Remove Config активной
             stopWireproxy();
             System.exit(0);
         });
