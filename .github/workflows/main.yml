@@ -32,10 +32,20 @@ jobs:
           echo "Files in build folder:"
           ls -lh app/build/libs/
 
+      - name: Create Custom JRE
+        run: |
+          jlink --add-modules java.base,java.desktop,java.logging,jdk.crypto.ec \
+                --strip-debug \
+                --no-man-pages \
+                --no-header-files \
+                --compress=2 \
+                --output custom-runtime
+
       - name: Create Package (jpackage)
         run: |
           jpackage --name "KVN" \
                    --type dmg \
+                   --runtime-image custom-runtime \
                    --input app/build/libs/ \
                    --main-jar app.jar \
                    --icon app/src/main/resources/kvn_logo_dock.icns \
