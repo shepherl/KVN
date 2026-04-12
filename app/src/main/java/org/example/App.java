@@ -141,7 +141,7 @@ public class App {
        disconnectItem.addActionListener(e -> {
             addFileAndRemove.setEnabled(true); // Делаем кнопку Remove Config активной
             stopWireproxy();
-            statusItem.setLabel("Status: Disconnected");
+            statusItem.setLabel("Status: Disconnected 🔴");
             connectItem.setEnabled(true);
             disconnectItem.setEnabled(false);
         });
@@ -155,7 +155,7 @@ public class App {
             // Сначала пробуем запустить наш Go бинарник
             if (startWireproxy()) {
                 addFileAndRemove.setEnabled(false); // Далаем кнопку Remove Config не активной
-                statusItem.setLabel("Status: Connected - 🟢");
+                statusItem.setLabel("Status: Connected 🟢");
                 connectItem.setEnabled(false);
                 disconnectItem.setEnabled(true);
             } else {
@@ -171,7 +171,7 @@ public class App {
          if(SettingsParser.auto_start()&&Files.exists(Path.of(configPath + "proxy.conf"))&&Files.exists(Path.of(configPath + "AmneziaConfig.conf"))){ // Проверка наличия автозапуска
             if (startWireproxy()) {
                 addFileAndRemove.setEnabled(false); // Далаем кнопку Remove Config не активной
-                statusItem.setLabel("Status: Connected (Go Active)");
+                statusItem.setLabel("Status: Connected 🟢");
                 connectItem.setEnabled(false);
                 disconnectItem.setEnabled(true);
             } else {
