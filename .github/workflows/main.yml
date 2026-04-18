@@ -63,30 +63,27 @@ jobs:
                    --java-options "-Dapple.awt.UIElement=true"
 
           
-      - name: Install create-dmg
-        run: brew install create-dmg
-
-      - name: Build Custom DMG with Desktop Link
+      - name: Build Reliable DMG (No-Sudo Version)
         run: |
-          # 1. Создаем папку для выходного файла (исправляет ошибку No such file or directory)
+          # 1. Создаем папку-песочницу для сборки
+          mkdir -p dmg_root
+          
+          # 2. Копируем туда приложение
+          cp -R "output/KVN.app" dmg_root/
+          
+          # 3. Создаем симлинк на Desktop прямо внутри этой папки
+          # В DMG он будет выглядеть как обычный ярлык
+          ln -s /Users/runner/Desktop "dmg_root/Desktop"
+          
+          # 4. Собираем DMG стандартным средством macOS
+          # -srcfolder указывает, что взять за основу
+          # -ov позволяет перезаписать файл
+          # -format UDZO делает образ сжатым
           mkdir -p dist
-          
-          # 2. Создаем симлинк на Desktop. 
-          # В macOS GitHub Runner путь к рабочему столу именно такой:
-          ln -s /Users/runner/Desktop "Desktop_Link"
-          
-          # 3. Запускаем create-dmg
-          # Мы используем Desktop_Link, чтобы Finder не путался с системными именами
-          create-dmg \
-            --volname "KVN Install" \
-            --window-pos 200 120 \
-            --window-size 600 400 \
-            --icon-size 100 \
-            --icon "KVN.app" 150 175 \
-            --icon "Desktop_Link" 450 175 \
-            --hide-extension "KVN.app" \
-            "dist/KVN_NoSudo.dmg" \
-            "output/KVN.app" "Desktop_Link"
+          hdiutil create -volname "KVN Installation" \
+                         -srcfolder dmg_root \
+                         -ov -format UDZO \
+                         "dist/KVN_NoSudo.dmg"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
