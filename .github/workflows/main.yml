@@ -73,7 +73,7 @@ jobs:
           cp -R "output/KVN.app" dmg_root/
           
           # 3. Создаем ярлык на Рабочий стол
-          ln -s /Users/runner/Desktop "dmg_root/Desktop"
+          ln -s ~/Desktop "Desktop"
           
           # 4. Собираем DMG
           mkdir -p final_dist
