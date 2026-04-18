@@ -53,7 +53,7 @@ jobs:
       - name: Create Package (jpackage)
         run: |
           jpackage --name "KVN" \
-                   --type dmg \
+                   --type app-image \
                    --runtime-image custom-runtime \
                    --input app/build/libs/ \
                    --main-jar app.jar \
@@ -61,6 +61,22 @@ jobs:
                    --main-class org.example.App \
                    --dest output/ \
                    --java-options "-Dapple.awt.UIElement=true"
+
+          
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Build Custom DMG with Desktop Link
+        run: |
+          # Создаем настоящий симлинк на Desktop
+          ln -s /Users/$(whoami)/Desktop "Desktop"
+          
+          create-dmg \
+            --volname "KVN Install" \
+            --icon "KVN.app" 150 175 \
+            --icon "Desktop" 450 175 \
+            "dist/KVN_NoSudo.dmg" \
+            "output/KVN.app" "Desktop"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
