@@ -63,19 +63,22 @@ jobs:
                    --java-options "-Dapple.awt.UIElement=true"
 
           
-      - name: Build Reliable DMG (Manual)
+      - name: Build Smart DMG (Universal Link)
         run: |
-          # 1. Создаем временную папку для "слепка" диска
           mkdir -p dmg_root
-          
-          # 2. Копируем туда собранный .app
-          # Важно: jpackage положит его в output/KVN.app
           cp -R "output/KVN.app" dmg_root/
           
-          # 3. Создаем ярлык на Рабочий стол
-          ln -s ~/Desktop "Desktop"
+          # ХАК: Вместо пути к runner, мы создаем относительную ссылку.
+          # В macOS точка ".." внутри корня DMG иногда может выкинуть в папку пользователя,
+          # но самый надежный способ для No-Sudo — это ссылка на /Users
+          ln -s /Users dmg_root/Users_Folder
           
-          # 4. Собираем DMG
+          # Или попробуем сделать "ленивый" симлинк, который подхватит текущего юзера
+          # Мы создаем его без указания полного пути.
+          cd dmg_root
+          ln -s ~/Desktop "Desktop"
+          cd ..
+
           mkdir -p final_dist
           hdiutil create -volname "KVN Installation" \
                          -srcfolder dmg_root \
