@@ -63,30 +63,30 @@ jobs:
                    --java-options "-Dapple.awt.UIElement=true"
 
           
-      - name: Build Reliable DMG (No-Sudo Version)
+      - name: Build Reliable DMG (Manual)
         run: |
-          # 1. Создаем папку-песочницу для сборки
+          # 1. Создаем временную папку для "слепка" диска
           mkdir -p dmg_root
           
-          # 2. Копируем туда приложение
+          # 2. Копируем туда собранный .app
+          # Важно: jpackage положит его в output/KVN.app
           cp -R "output/KVN.app" dmg_root/
           
-          # 3. Создаем симлинк на Desktop прямо внутри этой папки
-          # В DMG он будет выглядеть как обычный ярлык
+          # 3. Создаем ярлык на Рабочий стол
           ln -s /Users/runner/Desktop "dmg_root/Desktop"
           
-          # 4. Собираем DMG стандартным средством macOS
-          # -srcfolder указывает, что взять за основу
-          # -ov позволяет перезаписать файл
-          # -format UDZO делает образ сжатым
-          mkdir -p dist
+          # 4. Собираем DMG
+          mkdir -p final_dist
           hdiutil create -volname "KVN Installation" \
                          -srcfolder dmg_root \
                          -ov -format UDZO \
-                         "dist/KVN_NoSudo.dmg"
+                         "final_dist/KVN_NoSudo.dmg"
+          
+          # Проверка в логах
+          ls -lh final_dist/
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: macOS-Intel-App
-          path: output/
+          path: final_dist/KVN_NoSudo.dmg
