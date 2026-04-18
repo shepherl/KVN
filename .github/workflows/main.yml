@@ -68,15 +68,25 @@ jobs:
 
       - name: Build Custom DMG with Desktop Link
         run: |
-          # Создаем настоящий симлинк на Desktop
-          ln -s /Users/$(whoami)/Desktop "Desktop"
+          # 1. Создаем папку для выходного файла (исправляет ошибку No such file or directory)
+          mkdir -p dist
           
+          # 2. Создаем симлинк на Desktop. 
+          # В macOS GitHub Runner путь к рабочему столу именно такой:
+          ln -s /Users/runner/Desktop "Desktop_Link"
+          
+          # 3. Запускаем create-dmg
+          # Мы используем Desktop_Link, чтобы Finder не путался с системными именами
           create-dmg \
             --volname "KVN Install" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
             --icon "KVN.app" 150 175 \
-            --icon "Desktop" 450 175 \
+            --icon "Desktop_Link" 450 175 \
+            --hide-extension "KVN.app" \
             "dist/KVN_NoSudo.dmg" \
-            "output/KVN.app" "Desktop"
+            "output/KVN.app" "Desktop_Link"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
