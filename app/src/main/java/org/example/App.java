@@ -15,7 +15,7 @@ public class App {
     public static void main(String[] args) {
         String userName = System.getProperty("user.name");
         String configPath = "/Users/" + userName + "/KVN/";
-        Path pathBase = Path.of(configPath);
+        Path pathBase = Path.of(configPath); // Базовый путь к директории KVN
 
 
         if (!FileUtils.checkDirectoryExists(pathBase)) {
@@ -35,7 +35,7 @@ public class App {
             if(!Files.exists(Path.of(configPath+ "proxy.conf"))){
                 FileUtils.createfiles(Path.of(configPath + "proxy.conf"));
                 try{
-                Files.writeString(Path.of(configPath + "proxy.conf"),"WGConfig = WARPw13768.conf\r\n" + //
+                Files.writeString(Path.of(configPath + "proxy.conf"),"WGConfig = " + configPath + "AmneziaConfig.conf\r\n" + //
                                         "\r\n" + //
                                         "[Socks5]\r\n" + //
                                         "BindAddress = 127.0.0.1:1080");
