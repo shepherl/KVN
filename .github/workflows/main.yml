@@ -1,5 +1,11 @@
 name: Build macOS App
-on: [push]
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Причина запуска (опционально)'
+        required: false
+        default: 'Ручная сборка новой версии'
 
 jobs:
   build:

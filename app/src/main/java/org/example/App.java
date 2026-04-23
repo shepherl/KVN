@@ -15,9 +15,10 @@ public class App {
     public static void main(String[] args) {
         String userName = System.getProperty("user.name");
         String configPath = "/Users/" + userName + "/KVN/";
+        Path pathBase = Path.of(configPath);
 
 
-        if (!FileUtils.checkDirectoryExists()) {
+        if (!FileUtils.checkDirectoryExists(pathBase)) {
             FileUtils.createDirectory(Path.of(configPath));
             if(!Files.exists(Path.of(configPath + "AutoStartStatus.json"))){ // Проверка существования файла
                 FileUtils.createfiles(Path.of(configPath + "AutoStartStatus.json"));
@@ -105,10 +106,10 @@ public class App {
         autoStatrtCheckbox.addItemListener(e -> {
             boolean status = autoStatrtCheckbox.getState();
             if(status){
-                FileUtils.AutoStartStatusrWrite(true);
+                FileUtils.AutoStartStatusrWrite(true,pathBase);
                 //System.out.println("Включено");
             }else{
-                FileUtils.AutoStartStatusrWrite(false);
+                FileUtils.AutoStartStatusrWrite(false,pathBase);
                 //System.out.println("Отключено");
             }
 

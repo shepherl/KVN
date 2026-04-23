@@ -13,16 +13,14 @@ import java.nio.file.StandardCopyOption;
 
 public class FileUtils {
 
-    public static boolean checkDirectoryExists(){ // Метод проверки существования директории
-        String userName = System.getProperty("user.name");
-        String configPath = "/Users/" + userName + "/KVN/";
-        Path path = Path.of(configPath);
-        if(Files.exists(path)&& Files.isDirectory(path)){ // Проверка существования директораии и проверка это папка или файл
-            return true;
-        }else{
-            return false;
-        }
-
+/**
+     * Проверяет, существует ли директория по указанному пути, и является ли она директорией (а не файлом).
+     * @param path путь к директории, которую необходимо проверить
+     * @return true, если директория существует и это действительно директория; иначе false
+     */
+    public static boolean checkDirectoryExists(Path path) {
+        // Проверяем, существует ли путь и является ли он директорией
+        return Files.exists(path) && Files.isDirectory(path);
     }
 
 
@@ -44,31 +42,35 @@ public class FileUtils {
             }
     }
 
-    public static void AutoStartStatusrWrite(boolean start_status){ // Метод для изменения  AutoStartFil
-        String userName = System.getProperty("user.name");
-        String configPath = "/Users/" + userName + "/KVN/";
-        Path path = Path.of(configPath + "AutoStartStatus.json");
-        String content;
-        try{
-            if(start_status){
-            content = Files.readString(path);
+/**
+     * Обновляет статус автозапуска в файле AutoStartStatus.json.
+     * Заменяет значение поля "autoStart": 0 или 1 в зависимости от переданного параметра.
+     * Если файл не существует или возникла ошибка чтения/записи, выбрасывается исключение.
+     *
+     * @param start_status true для установки autoStart = 1, false для установки autoStart = 0
+     */
+public static void AutoStartStatusrWrite(boolean start_status, Path basePath) {
+    Path path = basePath.resolve("AutoStartStatus.json");
+
+    try {
+        String content = Files.readString(path); // Читаем содержимое файла
+
+        if (start_status) {
             content = content.replace("\"autoStart\": 0", "\"autoStart\": 1");
-            Files.writeString(path,content);
-            }else{
-                content = Files.readString(path);
-                content = content.replace("\"autoStart\": 1", "\"autoStart\": 0");
-                Files.writeString(path,content);
-                System.out.println("Работай !!!!!");
-            }
-
-
-        }catch(IOException e){
-            e.printStackTrace();
-
+        } else {
+            content = content.replace("\"autoStart\": 1", "\"autoStart\": 0");
         }
 
+        Files.writeString(path, content); // Записываем обновлённое содержимое
+
+    } catch (IOException e) {
+        System.err.println("Ошибка при работе с файлом AutoStartStatus.json: " + e.getMessage());
+        e.printStackTrace();
     }
-     public static void copyFile(Path path,Path pathCopy){
+}
+
+
+    public static void copyFile(Path path,Path pathCopy){
         try{
         Files.copy(path, pathCopy, StandardCopyOption.REPLACE_EXISTING);
         }catch(IOException e){
