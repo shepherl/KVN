@@ -47,7 +47,8 @@ public class Wireproxy {
 
             // 3. Запуск
             // Важно: передаем рабочую директорию, чтобы он нашел proxy.conf рядом
-
+            
+            System.out.println("Запустился прокси");
             ProcessBuilder pb = new ProcessBuilder(proxyFile.getAbsolutePath(), "-c", configPath + "proxy.conf");
             pb.directory(new File(appDir));
             pb.redirectErrorStream(true);

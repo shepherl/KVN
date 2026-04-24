@@ -92,7 +92,7 @@ public class App {
         MenuItem disconnectItem = new MenuItem("Disconnect");
         CheckboxMenuItem autoStatrtCheckbox = new CheckboxMenuItem("Auto Connect",SettingsParser.auto_start());
             String AddFileButtonText;
-        if(Files.exists(Path.of("/Users/shepherl/KVN/AmneziaConfig.conf"))){
+        if(Files.exists(Path.of(configPath + "AmneziaConfig.conf"))){
             AddFileButtonText = "Remove Config";
         }else{
             AddFileButtonText = "Add Config...";
