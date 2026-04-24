@@ -10,12 +10,13 @@ import java.nio.file.Path;
 import javax.imageio.ImageIO;
 
 public class App {
-    private static Process wireproxyProcess = null;
+
 
     public static void main(String[] args) {
         String userName = System.getProperty("user.name");
         String configPath = "/Users/" + userName + "/KVN/";
         Path pathBase = Path.of(configPath); // Базовый путь к директории KVN
+        Wireproxy eWireproxy = new Wireproxy(pathBase);
 
 
         if (!FileUtils.checkDirectoryExists(pathBase)) {
@@ -73,7 +74,7 @@ public class App {
         }
 
         System.setProperty("apple.awt.UIElement", "true");
-        Runtime.getRuntime().addShutdownHook(new Thread(App::stopWireproxy));
+        Runtime.getRuntime().addShutdownHook(new Thread(eWireproxy::stop));
 
         if (!SystemTray.isSupported()) return;
 
@@ -141,20 +142,20 @@ public class App {
        });
        disconnectItem.addActionListener(e -> {
             addFileAndRemove.setEnabled(true); // Делаем кнопку Remove Config активной
-            stopWireproxy();
+            eWireproxy.stopWireproxy();
             statusItem.setLabel("Status: Disconnected 🔴");
             connectItem.setEnabled(true);
             disconnectItem.setEnabled(false);
         });
         exitItem.addActionListener(e -> {
-            stopWireproxy();
+            eWireproxy.stopWireproxy();
             System.exit(0);
         });
         connectItem.addActionListener(e -> {
             statusItem.setLabel("Status: Connecting...");
 
             // Сначала пробуем запустить наш Go бинарник
-            if (startWireproxy()) {
+            if (eWireproxy.startWireproxy()) {
                 addFileAndRemove.setEnabled(false); // Далаем кнопку Remove Config не активной
                 statusItem.setLabel("Status: Connected 🟢");
                 connectItem.setEnabled(false);
@@ -170,7 +171,7 @@ public class App {
 
         // Логика работы автозапуска vpn при запуске утилиты
          if(SettingsParser.auto_start()&&Files.exists(Path.of(configPath + "proxy.conf"))&&Files.exists(Path.of(configPath + "AmneziaConfig.conf"))){ // Проверка наличия автозапуска
-            if (startWireproxy()) {
+            if (eWireproxy.startWireproxy()) {
                 addFileAndRemove.setEnabled(false); // Далаем кнопку Remove Config не активной
                 statusItem.setLabel("Status: Connected 🟢");
                 connectItem.setEnabled(false);
@@ -180,11 +181,11 @@ public class App {
             }
 
         }else{
-        
-        
+
+
         }
 
-        
+
 
 
 
@@ -201,71 +202,6 @@ public class App {
         try { tray.add(trayIcon); } catch (AWTException e) { e.printStackTrace(); }
     }
 
-    private static boolean startWireproxy() {
-        String userName = System.getProperty("user.name");
-        String configPath = "/Users/" + userName + "/KVN/";
-        try {
-            // 1. Поиск папки (Contents/app)
-            String appDir = System.getProperty("user.dir");
-
-            // Если мы внутри .app, user.dir часто указывает на Contents/app.
-            // Но если запуск из Терминала, путь может отличаться. Проверим:
-            File proxyFile = new File(appDir, "wireproxy");
-
-            if (!proxyFile.exists()) {
-                // Резервный поиск через путь к JAR
-                String jarPath = App.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
-                appDir = new File(jarPath).getParent();
-                proxyFile = new File(appDir, "wireproxy");
-            }
-
-            System.out.println("DEBUG: Binary Path -> " + proxyFile.getAbsolutePath());
-
-            if (!proxyFile.exists()) {
-                System.err.println("CRITICAL: wireproxy NOT FOUND!");
-                return false;
-            }
-
-            // 2. Снимаем карантин macOS (БЕЗ ЭТОГО НЕ ЗАПУСТИТСЯ)
-            // Если файл скачан из GitHub Actions, macOS пометит его как подозрительный.
-            try {
-                Runtime.getRuntime().exec(new String[]{"xattr", "-d", "com.apple.quarantine", proxyFile.getAbsolutePath()});
-            } catch (Exception ignored) {}
-
-            proxyFile.setExecutable(true);
-
-            // 3. Запуск
-            // Важно: передаем рабочую директорию, чтобы он нашел proxy.conf рядом
-
-            ProcessBuilder pb = new ProcessBuilder(proxyFile.getAbsolutePath(), "-c", configPath + "proxy.conf");
-            pb.directory(new File(appDir));
-            pb.redirectErrorStream(true);
-
-            wireproxyProcess = pb.start();
-
-            // 4. Поток чтения логов (чтобы увидеть ошибки Go в Терминале)
-            new Thread(() -> {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(wireproxyProcess.getInputStream()))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        System.out.println("[GO_ENGINE]: " + line);
-                    }
-                } catch (IOException e) { e.printStackTrace(); }
-            }).start();
-
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    private static void stopWireproxy() {
-        if (wireproxyProcess != null && wireproxyProcess.isAlive()) {
-            wireproxyProcess.destroy();
-            System.out.println("DEBUG: wireproxy stopped.");
-        }
-    }
 
     private static Image loadIcon() {
         try {
