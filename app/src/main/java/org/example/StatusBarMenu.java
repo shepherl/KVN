@@ -28,7 +28,7 @@ public class StatusBarMenu {
     }
 
 
-    public void itemСreate(){
+    public void itemCreate(){
         statusItem = new MenuItem("Status: Disconnected - 🔴");
         statusItem.setEnabled(false);
         connectItem = new MenuItem("Connect VPN");

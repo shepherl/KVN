@@ -116,7 +116,7 @@ public class App {
 
 
 
-        statusBarMenu.itemСreate();
+        statusBarMenu.itemCreate();
         statusBarMenu.runActionListener();
         statusBarMenu.addPopupMenu();
 
