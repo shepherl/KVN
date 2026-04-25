@@ -17,6 +17,7 @@ public class App {
         String configPath = "/Users/" + userName + "/KVN/";
         Path pathBase = Path.of(configPath); // Базовый путь к директории KVN
         Wireproxy eWireproxy = new Wireproxy(pathBase);
+        StatusBarMenu statusBarMenu = new StatusBarMenu(pathBase, pathBase, eWireproxy);
 
 
         if (!FileUtils.checkDirectoryExists(pathBase)) {
@@ -84,86 +85,17 @@ public class App {
         TrayIcon trayIcon = new TrayIcon(trayImage, "KVN");
         trayIcon.setImageAutoSize(true);
 
-        PopupMenu menu = new PopupMenu();
-        MenuItem statusItem = new MenuItem("Status: Disconnected - 🔴");
-        statusItem.setEnabled(false);
+       
 
-        MenuItem connectItem = new MenuItem("Connect VPN");
-        MenuItem disconnectItem = new MenuItem("Disconnect");
-        CheckboxMenuItem autoStatrtCheckbox = new CheckboxMenuItem("Auto Connect",SettingsParser.auto_start());
-            String AddFileButtonText;
-        if(Files.exists(Path.of(configPath + "AmneziaConfig.conf"))){
-            AddFileButtonText = "Remove Config";
-        }else{
-            AddFileButtonText = "Add Config...";
-        }
-        MenuItem addFileAndRemove = new MenuItem(AddFileButtonText);
-        disconnectItem.setEnabled(false);
-        MenuItem exitItem = new MenuItem("Exit");
+        
+        
 
 
 
 
-        autoStatrtCheckbox.addItemListener(e -> {
-            boolean status = autoStatrtCheckbox.getState();
-            if(status){
-                FileUtils.AutoStartStatusrWrite(true,pathBase);
-                //System.out.println("Включено");
-            }else{
-                FileUtils.AutoStartStatusrWrite(false,pathBase);
-                //System.out.println("Отключено");
-            }
+        
 
-        });
-
-       addFileAndRemove.addActionListener(e->{
-
-        if(addFileAndRemove.getLabel().equals("Add Config...")){
-
-            FileDialog fd = new FileDialog((Frame)null,"Add file", FileDialog.LOAD);
-            fd.setVisible(true);
-            String directory = fd.getDirectory();
-            String filename = fd.getFile();
-            String fullPath = directory + filename;
-            FileUtils.copyFile(Path.of(fullPath),Path.of(configPath + "AmneziaConfig.conf"));
-            //System.out.println("Выбран файл " + fullPath);
-            //FileUtils.copyFile("","");
-       addFileAndRemove.setLabel("Remove Config");
-        }else{
-            try{
-                Files.delete(Path.of(configPath + "AmneziaConfig.conf"));
-            }catch(IOException a){
-            a.getMessage();
-
-            }
-
-            addFileAndRemove.setLabel("Add Config...");
-        }
-       });
-       disconnectItem.addActionListener(e -> {
-            addFileAndRemove.setEnabled(true); // Делаем кнопку Remove Config активной
-            eWireproxy.stopWireproxy();
-            statusItem.setLabel("Status: Disconnected 🔴");
-            connectItem.setEnabled(true);
-            disconnectItem.setEnabled(false);
-        });
-        exitItem.addActionListener(e -> {
-            eWireproxy.stopWireproxy();
-            System.exit(0);
-        });
-        connectItem.addActionListener(e -> {
-            statusItem.setLabel("Status: Connecting...");
-
-            // Сначала пробуем запустить наш Go бинарник
-            if (eWireproxy.startWireproxy()) {
-                addFileAndRemove.setEnabled(false); // Далаем кнопку Remove Config не активной
-                statusItem.setLabel("Status: Connected 🟢");
-                connectItem.setEnabled(false);
-                disconnectItem.setEnabled(true);
-            } else {
-                System.out.println("Ошибка запуска утилиты");
-            }
-        });
+       
 
 
 
@@ -172,10 +104,10 @@ public class App {
         // Логика работы автозапуска vpn при запуске утилиты
          if(SettingsParser.auto_start()&&Files.exists(Path.of(configPath + "proxy.conf"))&&Files.exists(Path.of(configPath + "AmneziaConfig.conf"))){ // Проверка наличия автозапуска
             if (eWireproxy.startWireproxy()) {
-                addFileAndRemove.setEnabled(false); // Далаем кнопку Remove Config не активной
-                statusItem.setLabel("Status: Connected 🟢");
-                connectItem.setEnabled(false);
-                disconnectItem.setEnabled(true);
+                statusBarMenu.addFileAndRemove.setEnabled(false); // Далаем кнопку Remove Config не активной
+                statusBarMenu.statusItem.setLabel("Status: Connected 🟢");
+                statusBarMenu.connectItem.setEnabled(false);
+                statusBarMenu.disconnectItem.setEnabled(true);
             } else {
                 System.out.println("Ошибка запуска утилиты");
             }
@@ -186,16 +118,9 @@ public class App {
 
 
 
-        menu.add(statusItem); // Список элементов в интерфейсе
-        menu.addSeparator();
-        menu.add(connectItem);
-        menu.add(disconnectItem);
-        menu.add(autoStatrtCheckbox); // Чекбокс автозапуска
-        menu.add(addFileAndRemove);
-        menu.addSeparator();
-        menu.add(exitItem);
+        statusBarMenu.addPopupMenu();
 
-        trayIcon.setPopupMenu(menu);
+        trayIcon.setPopupMenu(statusBarMenu.menu);
         try { tray.add(trayIcon); } catch (AWTException e) { e.printStackTrace(); }
     }
 
