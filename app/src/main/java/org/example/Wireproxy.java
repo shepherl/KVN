@@ -56,7 +56,7 @@ public class Wireproxy {
 
     public void stopWireproxy() {
         if (wireproxyProcess != null && wireproxyProcess.isAlive()) {
-            wireproxyProcess.destroy();
+            wireproxyProcess.destroy(); // Вот здесь мы реально убиваем процесс в системе
             System.out.println("DEBUG: wireproxy stopped.");
         }
     }
@@ -106,13 +106,6 @@ public class Wireproxy {
                     }
                 } catch (IOException e) { e.printStackTrace(); }
             }).start();
-    }
-
-    public void stop() {
-        if (wireproxyProcess != null && wireproxyProcess.isAlive()) {
-            wireproxyProcess.destroy(); // Вот здесь мы реально убиваем процесс в системе
-            System.out.println("Wireproxy успешно остановлен.");
-        }
     }
 
     public static Process getProxyStatus(){

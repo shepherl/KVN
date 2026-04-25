@@ -74,12 +74,12 @@ public class App {
         }
 
         System.setProperty("apple.awt.UIElement", "true");
-        Runtime.getRuntime().addShutdownHook(new Thread(eWireproxy::stop));
+        Runtime.getRuntime().addShutdownHook(new Thread(eWireproxy::stopWireproxy));
 
         if (!SystemTray.isSupported()) return;
 
         SystemTray tray = SystemTray.getSystemTray();
-        Image trayImage = loadIcon();
+        Image trayImage = Icon.loadIcon();
 
         TrayIcon trayIcon = new TrayIcon(trayImage, "KVN");
         trayIcon.setImageAutoSize(true);
@@ -180,9 +180,6 @@ public class App {
                 System.out.println("Ошибка запуска утилиты");
             }
 
-        }else{
-
-
         }
 
 
@@ -203,16 +200,5 @@ public class App {
     }
 
 
-    private static Image loadIcon() {
-        try {
-            URL imageURL = App.class.getResource("/kvn_logo.png");
-            if (imageURL != null) return ImageIO.read(imageURL);
-            BufferedImage temp = new BufferedImage(18, 18, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g = temp.createGraphics();
-            g.setColor(Color.RED);
-            g.fillOval(2, 2, 14, 14);
-            g.dispose();
-            return temp;
-        } catch (Exception e) { return null; }
-    }
+
 }
