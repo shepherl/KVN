@@ -4,7 +4,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.Optional;
 
 public class Wireproxy {
     private static Process wireproxyProcess = null;
@@ -14,56 +16,36 @@ public class Wireproxy {
         this.configPath = configPath;
     }
 
-    public static boolean startWireproxy() {
+
+
+    public boolean startWireproxy() {
         try {
-            // 1. Поиск папки (Contents/app)
-            String appDir = System.getProperty("user.dir");
-
-            // Если мы внутри .app, user.dir часто указывает на Contents/app.
-            // Но если запуск из Терминала, путь может отличаться. Проверим:
-            File proxyFile = new File(appDir, "wireproxy");
-
-            if (!proxyFile.exists()) {
-                // Резервный поиск через путь к JAR
-                String jarPath = App.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
-                appDir = new File(jarPath).getParent();
-                proxyFile = new File(appDir, "wireproxy");
-            }
-
-            System.out.println("DEBUG: Binary Path -> " + proxyFile.getAbsolutePath());
-
-            if (!proxyFile.exists()) {
+          Optional<File> optionalproxyFile = proxyFileSearch();
+          File proxyFile;
+            if(optionalproxyFile.isPresent()){
+                proxyFile = optionalproxyFile.get();
+                System.out.println("DEBUG: Binary Path -> " + proxyFile.getAbsolutePath());
+            }else{
                 System.err.println("CRITICAL: wireproxy NOT FOUND!");
                 return false;
             }
 
             // 2. Снимаем карантин macOS (БЕЗ ЭТОГО НЕ ЗАПУСТИТСЯ)
             // Если файл скачан из GitHub Actions, macOS пометит его как подозрительный.
-            try {
-                Runtime.getRuntime().exec(new String[]{"xattr", "-d", "com.apple.quarantine", proxyFile.getAbsolutePath()});
-            } catch (Exception ignored) {}
-
-            proxyFile.setExecutable(true);
+            rmQuarantine(proxyFile);
 
             // 3. Запуск
             // Важно: передаем рабочую директорию, чтобы он нашел proxy.conf рядом
-            
+
             System.out.println("Запустился прокси");
             ProcessBuilder pb = new ProcessBuilder(proxyFile.getAbsolutePath(), "-c", configPath + ("/proxy.conf"));
-            pb.directory(new File(appDir));
+            pb.directory(proxyFile.getParentFile());
             pb.redirectErrorStream(true);
 
             wireproxyProcess = pb.start();
 
             // 4. Поток чтения логов (чтобы увидеть ошибки Go в Терминале)
-            new Thread(() -> {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(wireproxyProcess.getInputStream()))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        System.out.println("[GO_ENGINE]: " + line);
-                    }
-                } catch (IOException e) { e.printStackTrace(); }
-            }).start();
+            readeLogWireproxy();
 
             return true;
         } catch (Exception e) {
@@ -72,11 +54,58 @@ public class Wireproxy {
         }
     }
 
-    public static void stopWireproxy() {
+    public void stopWireproxy() {
         if (wireproxyProcess != null && wireproxyProcess.isAlive()) {
             wireproxyProcess.destroy();
             System.out.println("DEBUG: wireproxy stopped.");
         }
+    }
+
+    private Optional<File> proxyFileSearch(){ // Функция поиска пути к утилите wireproxy
+        // 1. Поиск папки (Contents/app)
+            String appDir = System.getProperty("user.dir");
+
+            // Если мы внутри .app, user.dir часто указывает на Contents/app.
+            // Но если запуск из Терминала, путь может отличаться. Проверим:
+            File proxyFile = new File(appDir, "wireproxy");
+
+            if (!proxyFile.exists()) {
+                // Резервный поиск через путь к JAR
+                String jarPath;
+                try {
+                    jarPath = App.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+                    appDir = new File(jarPath).getParent();
+                    proxyFile = new File(appDir, "wireproxy");
+                } catch (URISyntaxException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+
+            if(proxyFile.exists()){
+                return Optional.of(proxyFile);
+            }else{
+                return Optional.empty();
+            }
+
+    }
+
+    private void rmQuarantine(File proxyFile){ // Функция снятия с карантина Wireproxy и сдлеать исполняемым
+        try {
+                Runtime.getRuntime().exec(new String[]{"xattr", "-d", "com.apple.quarantine", proxyFile.getAbsolutePath()});
+            } catch (Exception ignored) {}
+                proxyFile.setExecutable(true);
+        }
+
+    private void readeLogWireproxy(){  // 4. Поток чтения логов (чтобы увидеть ошибки Go в Терминале)
+        new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(wireproxyProcess.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        System.out.println("[GO_ENGINE]: " + line);
+                    }
+                } catch (IOException e) { e.printStackTrace(); }
+            }).start();
     }
 
     public void stop() {
@@ -84,5 +113,9 @@ public class Wireproxy {
             wireproxyProcess.destroy(); // Вот здесь мы реально убиваем процесс в системе
             System.out.println("Wireproxy успешно остановлен.");
         }
+    }
+
+    public static Process getProxyStatus(){
+        return wireproxyProcess;
     }
 }
