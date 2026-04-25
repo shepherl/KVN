@@ -116,8 +116,8 @@ public class App {
 
 
 
-
-
+        statusBarMenu.itemСreate();
+        statusBarMenu.runActionListener();
         statusBarMenu.addPopupMenu();
 
         trayIcon.setPopupMenu(statusBarMenu.menu);
