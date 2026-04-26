@@ -87,7 +87,9 @@ public class App {
 
        
 
-        
+        statusBarMenu.itemCreate();
+        statusBarMenu.runActionListener();
+        statusBarMenu.addPopupMenu();
         
 
 
@@ -116,9 +118,7 @@ public class App {
 
 
 
-        statusBarMenu.itemCreate();
-        statusBarMenu.runActionListener();
-        statusBarMenu.addPopupMenu();
+        
 
         trayIcon.setPopupMenu(statusBarMenu.menu);
         try { tray.add(trayIcon); } catch (AWTException e) { e.printStackTrace(); }
