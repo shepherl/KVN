@@ -20,59 +20,8 @@ public class App {
         StatusBarMenu statusBarMenu = new StatusBarMenu(pathBase, pathBase, eWireproxy);
 
 
-        if (!FileUtils.checkDirectoryExists(pathBase)) {
-            FileUtils.createDirectory(Path.of(configPath));
-            if(!Files.exists(Path.of(configPath + "AutoStartStatus.json"))){ // Проверка существования файла
-                FileUtils.createfiles(Path.of(configPath + "AutoStartStatus.json"));
-                try{
-                System.out.println("Файла нет");
-                Files.writeString(Path.of(configPath + "AutoStartStatus.json"),"{\n" + //
-                                        "\"autoStart\": 0,\n" + //
-                                        "\"Lol\": 2\n" + //
-                                        "}");
-                }catch(IOException e){
-                    e.getMessage();
-                }
-            }
-            if(!Files.exists(Path.of(configPath+ "proxy.conf"))){
-                FileUtils.createfiles(Path.of(configPath + "proxy.conf"));
-                try{
-                Files.writeString(Path.of(configPath + "proxy.conf"),"WGConfig = " + configPath + "AmneziaConfig.conf\r\n" + //
-                                        "\r\n" + //
-                                        "[Socks5]\r\n" + //
-                                        "BindAddress = 127.0.0.1:1080");
-                }catch(IOException t){
-                    t.getMessage();
-                }
-            }
-
-        }else{
-            if(!Files.exists(Path.of(configPath + "AutoStartStatus.json"))){ // Проверка существования файла
-
-                FileUtils.createfiles(Path.of(configPath + "AutoStartStatus.json"));
-                try{
-                Files.writeString(Path.of(configPath + "AutoStartStatus.json"),"{\n" + //
-                                        " \"autoStart\": 0,\n" + //
-                                        " \"Lol\": 2\n" + //
-                                        "}");
-                }catch(IOException e){
-                    e.getMessage();
-                }
-            }
-            if(!Files.exists(Path.of(configPath + "proxy.conf"))){
-                FileUtils.createfiles(Path.of(configPath + "proxy.conf"));
-                try{
-                Files.writeString(Path.of(configPath + "proxy.conf"),"WGConfig = " + configPath +"AmneziaConfig.conf\r\n" + //
-                                        "\r\n" + //
-                                        "[Socks5]\r\n" + //
-                                        "BindAddress = 127.0.0.1:1080");
-                }catch(IOException t){
-                    t.getMessage();
-                }
-            }
-
-
-        }
+        FileCheck fileCheck = new FileCheck(pathBase,configPath);
+        fileCheck.startStart();
 
         System.setProperty("apple.awt.UIElement", "true");
         Runtime.getRuntime().addShutdownHook(new Thread(eWireproxy::stopWireproxy));
@@ -85,24 +34,10 @@ public class App {
         TrayIcon trayIcon = new TrayIcon(trayImage, "KVN");
         trayIcon.setImageAutoSize(true);
 
-       
-
         statusBarMenu.itemCreate();
         statusBarMenu.runActionListener();
         statusBarMenu.addPopupMenu();
         
-
-
-
-
-        
-
-       
-
-
-
-
-
         // Логика работы автозапуска vpn при запуске утилиты
          if(SettingsParser.auto_start()&&Files.exists(Path.of(configPath + "proxy.conf"))&&Files.exists(Path.of(configPath + "AmneziaConfig.conf"))){ // Проверка наличия автозапуска
             if (eWireproxy.startWireproxy()) {
@@ -115,10 +50,6 @@ public class App {
             }
 
         }
-
-
-
-        
 
         trayIcon.setPopupMenu(statusBarMenu.menu);
         try { tray.add(trayIcon); } catch (AWTException e) { e.printStackTrace(); }
