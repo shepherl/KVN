@@ -1,4 +1,4 @@
-package org.example; // Замени на свой пакет, если нужно
+package org.example.dns; // Замени на свой пакет, если нужно
 
 import java.util.Arrays;
 import java.util.List;
