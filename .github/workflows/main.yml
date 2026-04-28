@@ -62,6 +62,21 @@ jobs:
                    --dest output/ \
                    --java-options "-Dapple.awt.UIElement=true"
 
+      - name: Compile Swift Autostart Helper (Intel)
+        run: |
+          # Путь к исходнику
+          SWIFT_SRC="app/src/main/swift/AutoStart.swift"
+          
+          # Компилируем под Intel (x86_64) и называем результат AutoStart
+          swiftc "$SWIFT_SRC" -target x86_64-apple-macosx13.0 -o AutoStart
+          
+          # Закидываем внутрь собранного бандла
+          DEST_DIR="output/KVN.app/Contents/MacOS"
+          mkdir -p "$DEST_DIR"
+          cp AutoStart "$DEST_DIR/"
+          chmod +x "$DEST_DIR/AutoStart"
+          
+          echo "AutoStart helper successfully injected into $DEST_DIR"
           
       - name: Build Smart DMG (Universal Link)
         run: |

@@ -22,7 +22,7 @@ public class App {
 
         FileCheck fileCheck = new FileCheck(pathBase,configPath);
 
-       // AutoStart.setAutoLaunch(true);
+        AutoStart.setAutoLaunch(true);
         fileCheck.startStart();
 
         System.setProperty("apple.awt.UIElement", "true");

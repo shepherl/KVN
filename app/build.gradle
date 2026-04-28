@@ -24,11 +24,7 @@ dependencies {
     // This dependency is used by the application.
     implementation libs.guava
 
-    // Основное ядро JNA
-    implementation 'net.java.dev.jna:jna:5.13.0'
 
-    // Платформенные надстройки (нужны для macOS/Windows специфичных штук)
-    implementation 'net.java.dev.jna:jna-platform:5.13.0'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
