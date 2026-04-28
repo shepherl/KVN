@@ -51,9 +51,11 @@ public class StatusBarMenu {
         autoStatrtCheckbox.addItemListener(e -> {
             boolean status = autoStatrtCheckbox.getState();
             if(status){
+                AutoStart.setAutoLaunch(true);
                 FileUtils.AutoStartStatusrWrite(true,pathBase);
                 //System.out.println("Включено");
             }else{
+                AutoStart.setAutoLaunch(false);
                 FileUtils.AutoStartStatusrWrite(false,pathBase);
                 //System.out.println("Отключено");
             }

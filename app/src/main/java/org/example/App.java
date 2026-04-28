@@ -22,7 +22,6 @@ public class App {
 
         FileCheck fileCheck = new FileCheck(pathBase,configPath);
 
-        AutoStart.setAutoLaunch(true);
         fileCheck.startStart();
 
         System.setProperty("apple.awt.UIElement", "true");
@@ -43,6 +42,7 @@ public class App {
         // Логика работы автозапуска vpn при запуске утилиты
          if(SettingsParser.auto_start()&&Files.exists(Path.of(configPath + "proxy.conf"))&&Files.exists(Path.of(configPath + "AmneziaConfig.conf"))){ // Проверка наличия автозапуска
             if (eWireproxy.startWireproxy()) {
+                AutoStart.setAutoLaunch(true);
                 statusBarMenu.addFileAndRemove.setEnabled(false); // Далаем кнопку Remove Config не активной
                 statusBarMenu.statusItem.setLabel("Status: Connected 🟢");
                 statusBarMenu.connectItem.setEnabled(false);
