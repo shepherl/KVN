@@ -22,7 +22,8 @@ public class AutoConnect {
          }
 
          if(autoStart && canStart){
-            if (engine == 0 ? eWireproxy.startWireproxy() : OperaProxy.startOperaProxy()) {
+            int port = SettingsParser.getProxyPort();
+            if (engine == 0 ? eWireproxy.startWireproxy() : OperaProxy.startOperaProxy(port)) {
                 AutoStart.setAutoLaunch(true);
                 statusBarMenu.statusItem.setLabel("Status: Connected 🟢");
                 statusBarMenu.toggleConnectItem.setLabel("Disconnect");
