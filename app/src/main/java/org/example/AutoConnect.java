@@ -24,7 +24,6 @@ public class AutoConnect {
          if(autoStart && canStart){
             if (engine == 0 ? eWireproxy.startWireproxy() : OperaProxy.startOperaProxy()) {
                 AutoStart.setAutoLaunch(true);
-                if (engine == 0) statusBarMenu.addFileAndRemove.setEnabled(false);
                 statusBarMenu.statusItem.setLabel("Status: Connected 🟢");
                 statusBarMenu.toggleConnectItem.setLabel("Disconnect");
             } else {

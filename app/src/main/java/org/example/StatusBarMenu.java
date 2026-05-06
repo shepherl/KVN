@@ -29,7 +29,6 @@ public class StatusBarMenu {
     public CheckboxMenuItem operaItem;
     public CheckboxMenuItem[] dnsItems;
     public CheckboxMenuItem customDnsItem;
-    public MenuItem addFileAndRemove;
     public MenuItem exitItem;
     private Path pathBase;
     private Path configPath;
@@ -197,11 +196,9 @@ public class StatusBarMenu {
             if (startCurrentProxy(engine)) {
                 statusItem.setLabel("Status: Connected 🟢");
                 toggleConnectItem.setLabel("Disconnect");
-                if (engine == 0) addFileAndRemove.setEnabled(false);
             } else {
                 statusItem.setLabel("Status: Error 🔴");
                 toggleConnectItem.setLabel("Connect VPN");
-                if (engine == 0) addFileAndRemove.setEnabled(true);
             }
         } else {
             statusItem.setLabel("Status: Disconnected 🔴");
@@ -297,10 +294,8 @@ public class StatusBarMenu {
         stopCurrentProxy(engine);
         statusItem.setLabel("Status: Reconnecting...");
         toggleConnectItem.setLabel("Connect VPN");
-        if (engine == 0) addFileAndRemove.setEnabled(true);
 
         if (startCurrentProxy(engine)) {
-            if (engine == 0) addFileAndRemove.setEnabled(false);
             statusItem.setLabel("Status: Connected 🟢");
             toggleConnectItem.setLabel("Disconnect");
         } else {
@@ -325,14 +320,12 @@ public class StatusBarMenu {
             if (toggleConnectItem.getLabel().equals("Connect VPN")) {
                 statusItem.setLabel("Status: Connecting...");
                 if (startCurrentProxy(engine)) {
-                    if (engine == 0) addFileAndRemove.setEnabled(false);
                     statusItem.setLabel("Status: Connected 🟢");
                     toggleConnectItem.setLabel("Disconnect");
                 } else {
                     statusItem.setLabel("Status: Error 🔴");
                 }
             } else {
-                if (engine == 0) addFileAndRemove.setEnabled(true);
                 stopCurrentProxy(engine);
                 statusItem.setLabel("Status: Disconnected 🔴");
                 toggleConnectItem.setLabel("Connect VPN");
