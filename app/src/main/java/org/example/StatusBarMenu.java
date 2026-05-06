@@ -102,6 +102,7 @@ public class StatusBarMenu {
         
         FileUtils.ProxyEngineWrite(engine, pathBase);
         updateEngineUI(engine);
+        addPopupMenu(); // Перестраиваем структуру меню
 
         if (wasRunning) {
             statusItem.setLabel("Status: Connecting...");
@@ -123,11 +124,6 @@ public class StatusBarMenu {
     private void updateEngineUI(int engine) {
         wireproxyItem.setState(engine == 0);
         operaItem.setState(engine == 1);
-        dnsMenu.setEnabled(engine == 0);
-        // Кнопка Add/Remove Config нужна только для Wireproxy
-        if (toggleConnectItem.getLabel().equals("Connect VPN")) {
-            addFileAndRemove.setEnabled(engine == 0);
-        }
     }
 
     private boolean startCurrentProxy(int engine) {
@@ -308,13 +304,22 @@ public class StatusBarMenu {
     }
 
     public void addPopupMenu(){
-        menu.add(statusItem); // Список элементов в интерфейсе
+        menu.removeAll(); // Полная очистка перед сборкой
+        int engine = SettingsParser.getProxyEngine();
+
+        menu.add(statusItem);
         menu.addSeparator();
         menu.add(toggleConnectItem);
-        menu.add(autoStatrtCheckbox); // Чекбокс автозапуска
+        menu.add(autoStatrtCheckbox);
+        menu.addSeparator();
         menu.add(engineMenu);
-        menu.add(dnsMenu);
-        menu.add(addFileAndRemove);
+
+        // Эти пункты добавляем ТОЛЬКО для Wireproxy (движок 0)
+        if (engine == 0) {
+            menu.add(dnsMenu);
+            menu.add(addFileAndRemove);
+        }
+
         menu.addSeparator();
         menu.add(exitItem);
     }
