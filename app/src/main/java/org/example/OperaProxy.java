@@ -23,9 +23,14 @@ public class OperaProxy {
             // Снимаем карантин
             rmQuarantine(proxyFile);
 
-            System.out.println("Запустился Opera Proxy");
-            // Команда: ./opera-proxy.darwin-amd64 -country EU
-            ProcessBuilder pb = new ProcessBuilder(proxyFile.getAbsolutePath(), "-country", "EU");
+            System.out.println("Запустился Opera Proxy (SOCKS5 mode on 1080)");
+            // Команда: ./opera-proxy.darwin-amd64 -country EU -bind-address 127.0.0.1:1080 -socks-mode
+            ProcessBuilder pb = new ProcessBuilder(
+                proxyFile.getAbsolutePath(), 
+                "-country", "EU", 
+                "-bind-address", "127.0.0.1:1080",
+                "-socks-mode"
+            );
             pb.directory(proxyFile.getParentFile());
             pb.redirectErrorStream(true);
 
