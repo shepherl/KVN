@@ -228,7 +228,9 @@ public class StatusBarMenu {
         });
 
         exitItem.addActionListener(e -> {
-
+            eWireproxy.stopWireproxy();
+            System.exit(0);
+        });
     }
 
     public void addPopupMenu(){
