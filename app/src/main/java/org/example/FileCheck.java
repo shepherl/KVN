@@ -29,7 +29,6 @@ public class FileCheck{
                                         "}");
                 }catch(IOException e){ e.printStackTrace(); }
             }
-            // ... остальной код создания proxy.conf
             if(!Files.exists(pathBase.resolve("proxy.conf"))){
                 FileUtils.createfiles(pathBase.resolve("proxy.conf"));
                 try{

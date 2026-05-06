@@ -83,6 +83,9 @@ public class StatusBarMenu {
         profilesMenu = new Menu("Profiles");
         refreshProfilesMenu();
         
+        // Обновляем proxy.conf актуальным профилем при старте
+        updateProxyConf(SettingsParser.getActiveProfile());
+        
         // Принудительно останавливаем все процессы при старте утилиты
         stopCurrentProxy(0);
         stopCurrentProxy(1);
@@ -214,7 +217,6 @@ public class StatusBarMenu {
         updateEngineUI(engine);
         updateConnectionButtonState(); // Проверяем состояние кнопки
         addPopupMenu(); // Перестраиваем структуру меню
-    ...
 
         if (wasRunning) {
             statusItem.setLabel("Status: Connecting...");
