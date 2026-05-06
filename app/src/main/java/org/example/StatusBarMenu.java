@@ -228,7 +228,14 @@ public class StatusBarMenu {
     }
 
     private void handleDnsSelection(int id, DnsProvider provider) {
-        Path fullConfigPath = configPath.resolve("AmneziaConfig.conf");
+        String activeProfile = SettingsParser.getActiveProfile();
+        if (activeProfile.isEmpty()) {
+            System.err.println("No active profile selected to change DNS");
+            updateDnsUI(detectCurrentDns()); // Сбрасываем галочки к текущему состоянию
+            return;
+        }
+
+        Path fullConfigPath = pathBase.resolve("configs").resolve(activeProfile);
         if (Files.exists(fullConfigPath)) {
             Changedns.change(fullConfigPath, provider);
             FileUtils.DNStatusWrite(id, pathBase);
