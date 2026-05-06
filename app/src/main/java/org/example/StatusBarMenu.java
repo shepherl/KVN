@@ -24,6 +24,7 @@ public class StatusBarMenu {
     public CheckboxMenuItem autoStatrtCheckbox;
     public Menu dnsMenu;
     public Menu engineMenu;
+    public Menu profilesMenu;
     public CheckboxMenuItem wireproxyItem;
     public CheckboxMenuItem operaItem;
     public CheckboxMenuItem[] dnsItems;
@@ -80,15 +81,97 @@ public class StatusBarMenu {
         dnsMenu.addSeparator();
         dnsMenu.add(customDnsItem);
 
-        String AddFileButtonText;
-        if(Files.exists(configPath.resolve("AmneziaConfig.conf"))){
-            AddFileButtonText = "Remove Config";
-        }else{
-            AddFileButtonText = "Add Config...";
-        }
-        addFileAndRemove = new MenuItem(AddFileButtonText);
+        profilesMenu = new Menu("Profiles");
+        refreshProfilesMenu();
+
         exitItem = new MenuItem("Exit");
         updateEngineUI(currentEngine);
+    }
+
+    private void refreshProfilesMenu() {
+        profilesMenu.removeAll();
+        
+        MenuItem addProfileItem = new MenuItem("Add New Profile...");
+        addProfileItem.addActionListener(e -> {
+            FileDialog fd = new FileDialog((Frame)null,"Add Config", FileDialog.LOAD);
+            fd.setVisible(true);
+            if (fd.getDirectory() != null && fd.getFile() != null) {
+                Path source = Path.of(fd.getDirectory(), fd.getFile());
+                Path target = pathBase.resolve("configs").resolve(fd.getFile());
+                FileUtils.copyFile(source, target);
+                
+                // Если это первый профиль, делаем его активным
+                if (SettingsParser.getActiveProfile().isEmpty()) {
+                    selectProfile(fd.getFile());
+                }
+                refreshProfilesMenu();
+                addPopupMenu();
+            }
+        });
+        profilesMenu.add(addProfileItem);
+        profilesMenu.addSeparator();
+
+        Path configsDir = pathBase.resolve("configs");
+        try {
+            String activeProfile = SettingsParser.getActiveProfile();
+            if (Files.exists(configsDir)) {
+                Files.list(configsDir)
+                    .filter(p -> p.toString().endsWith(".conf"))
+                    .forEach(p -> {
+                        String fileName = p.getFileName().toString();
+                        Menu profileSubMenu = new Menu(fileName + (fileName.equals(activeProfile) ? " 🟢" : ""));
+                        
+                        MenuItem selectItem = new MenuItem("Select");
+                        selectItem.addActionListener(e -> selectProfile(fileName));
+                        
+                        MenuItem deleteItem = new MenuItem("Delete");
+                        deleteItem.addActionListener(e -> {
+                            try {
+                                Files.delete(p);
+                                if (fileName.equals(activeProfile)) {
+                                    FileUtils.ActiveProfileWrite("", pathBase);
+                                    updateProxyConf("");
+                                }
+                                refreshProfilesMenu();
+                                addPopupMenu();
+                            } catch (IOException ex) { ex.printStackTrace(); }
+                        });
+
+                        profileSubMenu.add(selectItem);
+                        profileSubMenu.add(deleteItem);
+                        profilesMenu.add(profileSubMenu);
+                    });
+            }
+        } catch (IOException e) { e.printStackTrace(); }
+    }
+
+    private void selectProfile(String profileName) {
+        FileUtils.ActiveProfileWrite(profileName, pathBase);
+        updateProxyConf(profileName);
+        
+        // Детектируем DNS из нового файла
+        int detectedDnsId = detectCurrentDns();
+        FileUtils.DNStatusWrite(detectedDnsId, pathBase);
+        updateDnsUI(detectedDnsId);
+        
+        refreshProfilesMenu();
+        addPopupMenu();
+
+        if (toggleConnectItem.getLabel().equals("Disconnect")) {
+            restartVpn();
+        }
+    }
+
+    private void updateProxyConf(String profileName) {
+        try {
+            Path proxyConfPath = pathBase.resolve("proxy.conf");
+            String configPathStr = profileName.isEmpty() ? "" : pathBase.resolve("configs").resolve(profileName).toString();
+            String content = "WGConfig = " + configPathStr + "\r\n" +
+                             "\r\n" +
+                             "[Socks5]\r\n" +
+                             "BindAddress = 127.0.0.1:1080";
+            Files.writeString(proxyConfPath, content);
+        } catch (IOException e) { e.printStackTrace(); }
     }
 
     private void handleEngineSelection(int engine) {
@@ -169,7 +252,9 @@ public class StatusBarMenu {
     }
 
     private int detectCurrentDns() {
-        Path fullConfigPath = configPath.resolve("AmneziaConfig.conf");
+        String activeProfile = SettingsParser.getActiveProfile();
+        if (activeProfile.isEmpty()) return 1;
+        Path fullConfigPath = pathBase.resolve("configs").resolve(activeProfile);
         if (!Files.exists(fullConfigPath)) return 1;
 
         try {
@@ -224,58 +309,11 @@ public class StatusBarMenu {
             if(status){
                 AutoStart.setAutoLaunch(true);
                 FileUtils.AutoStartStatusrWrite(true,pathBase);
-                //System.out.println("Включено");
             }else{
                 AutoStart.setAutoLaunch(false);
                 FileUtils.AutoStartStatusrWrite(false,pathBase);
-                //System.out.println("Отключено");
             }
-
         });
-
-        addFileAndRemove.addActionListener(e->{
-
-        if(addFileAndRemove.getLabel().equals("Add Config...")){
-
-            FileDialog fd = new FileDialog((Frame)null,"Add file", FileDialog.LOAD);
-            fd.setVisible(true);
-            String directory = fd.getDirectory();
-            String filename = fd.getFile();
-            if (directory != null && filename != null) {
-                Path sourcePath = Path.of(directory, filename);
-                Path targetPath = configPath.resolve("AmneziaConfig.conf");
-                
-                FileUtils.copyFile(sourcePath, targetPath);
-                
-                // Детектируем DNS из нового файла
-                int detectedDnsId = detectCurrentDns();
-                FileUtils.DNStatusWrite(detectedDnsId, pathBase);
-                updateDnsUI(detectedDnsId);
-                
-                addFileAndRemove.setLabel("Remove Config");
-            }
-        }else{
-            try{
-                // На всякий случай останавливаем прокси перед удалением конфига
-                int engine = SettingsParser.getProxyEngine();
-                stopCurrentProxy(engine);
-                statusItem.setLabel("Status: Disconnected 🔴");
-                toggleConnectItem.setLabel("Connect VPN");
-
-                Path fileToDelete = configPath.resolve("AmneziaConfig.conf");
-                Files.deleteIfExists(fileToDelete);
-                
-                // После удаления конфига сбрасываем на Cloudflare (1)
-                updateDnsUI(1);
-                FileUtils.DNStatusWrite(1, pathBase);
-                addFileAndRemove.setLabel("Add Config...");
-                System.out.println("Config removed successfully.");
-            }catch(IOException a){
-                System.err.println("Could not delete config file: " + a.getMessage());
-                a.printStackTrace();
-            }
-        }
-       });
 
        toggleConnectItem.addActionListener(e -> {
             int engine = SettingsParser.getProxyEngine();
@@ -317,7 +355,7 @@ public class StatusBarMenu {
         // Эти пункты добавляем ТОЛЬКО для Wireproxy (движок 0)
         if (engine == 0) {
             menu.add(dnsMenu);
-            menu.add(addFileAndRemove);
+            menu.add(profilesMenu);
         }
 
         menu.addSeparator();

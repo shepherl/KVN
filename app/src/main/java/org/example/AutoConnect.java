@@ -11,8 +11,9 @@ public class AutoConnect {
          
          boolean canStart = false;
          if (engine == 0) {
-             // Для Wireproxy нужны файлы конфигурации
-             if (Files.exists(Path.of(configPath + "proxy.conf")) && Files.exists(Path.of(configPath + "AmneziaConfig.conf"))) {
+             // Для Wireproxy нужен активный профиль и файл этого профиля
+             String activeProfile = SettingsParser.getActiveProfile();
+             if (!activeProfile.isEmpty() && Files.exists(Path.of(configPath).resolve("configs").resolve(activeProfile))) {
                  canStart = true;
              }
          } else {

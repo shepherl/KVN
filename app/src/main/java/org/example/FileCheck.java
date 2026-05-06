@@ -16,20 +16,20 @@ public class FileCheck{
 
     public void startStart(){
     if (!FileUtils.checkDirectoryExists(pathBase)) {
-            FileUtils.createDirectory(Path.of(configPath));
-            if(!Files.exists(pathBase.resolve("AutoStartStatus.json"))){ // Проверка существования файла
+            FileUtils.createDirectory(pathBase);
+            FileUtils.createDirectory(pathBase.resolve("configs")); // Создаем папку для профилей
+            if(!Files.exists(pathBase.resolve("AutoStartStatus.json"))){ 
                 FileUtils.createfiles(pathBase.resolve("AutoStartStatus.json"));
                 try{
-                System.out.println("Файла нет");
-                Files.writeString(pathBase.resolve("AutoStartStatus.json"),"{\n" + //
-                                        "\"autoStart\": 0,\n" + //
-                                        "\"DNStatus\": 1,\n" + //
-                                        "\"ProxyEngine\": 0\n" + //
+                Files.writeString(pathBase.resolve("AutoStartStatus.json"),"{\n" + 
+                                        "\"autoStart\": 0,\n" + 
+                                        "\"DNStatus\": 1,\n" + 
+                                        "\"ProxyEngine\": 0,\n" +
+                                        "\"activeProfile\": \"\"\n" +
                                         "}");
-                }catch(IOException e){
-                    e.getMessage();
-                }
+                }catch(IOException e){ e.printStackTrace(); }
             }
+            // ... остальной код создания proxy.conf
             if(!Files.exists(pathBase.resolve("proxy.conf"))){
                 FileUtils.createfiles(pathBase.resolve("proxy.conf"));
                 try{
@@ -43,18 +43,20 @@ public class FileCheck{
             }
 
         }else{
+            if (!FileUtils.checkDirectoryExists(pathBase.resolve("configs"))) {
+                FileUtils.createDirectory(pathBase.resolve("configs"));
+            }
             if(!Files.exists(pathBase.resolve("AutoStartStatus.json"))){ // Проверка существования файла
 
                 FileUtils.createfiles(pathBase.resolve("AutoStartStatus.json"));
                 try{
-                Files.writeString(pathBase.resolve("AutoStartStatus.json"),"{\n" + //
-                                        "\"autoStart\": 0,\n" + //
-                                        "\"DNStatus\": 1,\n" + //
-                                        "\"ProxyEngine\": 0\n" + //
+                Files.writeString(pathBase.resolve("AutoStartStatus.json"),"{\n" + 
+                                        "\"autoStart\": 0,\n" + 
+                                        "\"DNStatus\": 1,\n" + 
+                                        "\"ProxyEngine\": 0,\n" +
+                                        "\"activeProfile\": \"\"\n" +
                                         "}");
-                }catch(IOException e){
-                    e.getMessage();
-                }
+                }catch(IOException e){ e.printStackTrace(); }
             }
             if(!Files.exists(pathBase.resolve("proxy.conf"))){
                 FileUtils.createfiles(pathBase.resolve("proxy.conf"));

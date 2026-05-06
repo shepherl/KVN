@@ -82,29 +82,37 @@ public static void AutoStartStatusrWrite(boolean start_status, Path basePath) {
     }
 
     public static void DNStatusWrite(int status, Path basePath) {
-        updateJsonField("DNStatus", String.valueOf(status), basePath);
+        updateJsonField("DNStatus", String.valueOf(status), false, basePath);
     }
 
     public static void ProxyEngineWrite(int engine, Path basePath) {
-        updateJsonField("ProxyEngine", String.valueOf(engine), basePath);
+        updateJsonField("ProxyEngine", String.valueOf(engine), false, basePath);
     }
 
-    private static void updateJsonField(String key, String value, Path basePath) {
+    public static void ActiveProfileWrite(String profileName, Path basePath) {
+        updateJsonField("activeProfile", profileName, true, basePath);
+    }
+
+    private static void updateJsonField(String key, String value, boolean isString, Path basePath) {
         Path path = basePath.resolve("AutoStartStatus.json");
         try {
             String content = Files.readString(path).trim();
-            String pattern = "\"" + key + "\"\\s*:\\s*\\d+";
+            String formattedValue = isString ? "\"" + value + "\"" : value;
+            
+            // Паттерн теперь учитывает как числа, так и строки в кавычках
+            String pattern = "\"" + key + "\"\\s*:\\s*(?:\"[^\"]*\"|\\d+)";
+            
             if (content.matches("(?s).*" + pattern + ".*")) {
-                content = content.replaceAll(pattern, "\"" + key + "\": " + value);
+                content = content.replaceAll(pattern, "\"" + key + "\": " + formattedValue);
             } else {
                 // Если поля нет, добавляем его перед последней закрывающей скобкой
                 int lastBrace = content.lastIndexOf("}");
                 if (lastBrace != -1) {
                     String prefix = content.substring(0, lastBrace).trim();
                     if (prefix.endsWith("{")) {
-                        content = prefix + "\"" + key + "\": " + value + "}";
+                        content = prefix + "\"" + key + "\": " + formattedValue + "}";
                     } else {
-                        content = prefix + ",\n\"" + key + "\": " + value + "}";
+                        content = prefix + ",\n\"" + key + "\": " + formattedValue + "}";
                     }
                 }
             }

@@ -73,4 +73,17 @@ public class SettingsParser { // Парсер значений из json
         return 0; // Default: Wireproxy
     }
 
+    public static String getActiveProfile() {
+        String userName = System.getProperty("user.name");
+        Path path = Path.of("/Users", userName, "KVN", "AutoStartStatus.json");
+        try {
+            String content = Files.readString(path);
+            String val = findValue(content, "activeProfile");
+            if (!val.equals("Not found")) {
+                return val;
+            }
+        } catch (Exception e) {}
+        return "";
+    }
+
 }
