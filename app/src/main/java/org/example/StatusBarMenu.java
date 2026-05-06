@@ -90,6 +90,7 @@ public class StatusBarMenu {
         exitItem = new MenuItem("Exit");
         updateEngineUI(currentEngine);
         updateDnsUI(currentDnsId);
+        updateConnectionButtonState();
     }
 
     private void refreshProfilesMenu() {
@@ -137,7 +138,9 @@ public class StatusBarMenu {
                                     updateProxyConf("");
                                 }
                                 refreshProfilesMenu();
+                                updateConnectionButtonState();
                                 addPopupMenu();
+
                             } catch (IOException ex) { ex.printStackTrace(); }
                         });
 
@@ -159,6 +162,7 @@ public class StatusBarMenu {
         updateDnsUI(detectedDnsId);
         
         refreshProfilesMenu();
+        updateConnectionButtonState();
 
         if (toggleConnectItem.getLabel().equals("Disconnect")) {
             restartVpn();
@@ -179,18 +183,38 @@ public class StatusBarMenu {
         } catch (IOException e) { e.printStackTrace(); }
     }
 
+    private void updateConnectionButtonState() {
+        int engine = SettingsParser.getProxyEngine();
+        if (engine == 1) { // Opera Proxy не требует конфига в нашей реализации
+            toggleConnectItem.setEnabled(true);
+        } else { // Wireproxy
+            String activeProfile = SettingsParser.getActiveProfile();
+            boolean hasActiveProfile = !activeProfile.isEmpty() && 
+                Files.exists(pathBase.resolve("configs").resolve(activeProfile));
+
+            // Если мы уже подключены, кнопку Disconnect нельзя блокировать
+            if (toggleConnectItem.getLabel().equals("Disconnect")) {
+                toggleConnectItem.setEnabled(true);
+            } else {
+                toggleConnectItem.setEnabled(hasActiveProfile);
+            }
+        }
+    }
+
     private void handleEngineSelection(int engine) {
         // Мы НЕ выходим, если старый движок совпадает с новым, на случай рассинхрона UI
-        
+
         boolean wasRunning = toggleConnectItem.getLabel().equals("Disconnect");
-        
+
         // Всегда останавливаем всё перед переключением
         stopCurrentProxy(0); // Wireproxy
         stopCurrentProxy(1); // Opera
-        
+
         FileUtils.ProxyEngineWrite(engine, pathBase);
         updateEngineUI(engine);
+        updateConnectionButtonState(); // Проверяем состояние кнопки
         addPopupMenu(); // Перестраиваем структуру меню
+    ...
 
         if (wasRunning) {
             statusItem.setLabel("Status: Connecting...");
