@@ -25,7 +25,10 @@ public class App {
         fileCheck.startStart();
 
         System.setProperty("apple.awt.UIElement", "true");
-        Runtime.getRuntime().addShutdownHook(new Thread(eWireproxy::stopWireproxy));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            eWireproxy.stopWireproxy();
+            OperaProxy.stopOperaProxy();
+        }));
 
         if (!SystemTray.isSupported()) return;
 
@@ -37,9 +40,12 @@ public class App {
 
         statusBarMenu.itemCreate();
         statusBarMenu.runActionListener();
-        statusBarMenu.addPopupMenu();
+        statusBarMenu.addPopupMenu(); // Это критически важно для отрисовки меню
 
         AutoConnect.run(eWireproxy, statusBarMenu, configPath);
+        
+        // После AutoConnect нужно обновить меню, так как статус мог измениться
+        statusBarMenu.addPopupMenu(); 
 
         trayIcon.setPopupMenu(statusBarMenu.menu);
         try { tray.add(trayIcon); } catch (AWTException e) { e.printStackTrace(); }

@@ -83,6 +83,10 @@ public class StatusBarMenu {
 
         profilesMenu = new Menu("Profiles");
         refreshProfilesMenu();
+        
+        // Принудительно останавливаем все процессы при старте утилиты
+        stopCurrentProxy(0);
+        stopCurrentProxy(1);
 
         exitItem = new MenuItem("Exit");
         updateEngineUI(currentEngine);
@@ -155,10 +159,11 @@ public class StatusBarMenu {
         updateDnsUI(detectedDnsId);
         
         refreshProfilesMenu();
-        addPopupMenu();
 
         if (toggleConnectItem.getLabel().equals("Disconnect")) {
             restartVpn();
+        } else {
+            addPopupMenu();
         }
     }
 
