@@ -20,8 +20,7 @@ import org.example.dns.DnsProvider;
 public class StatusBarMenu {
     public PopupMenu menu = new PopupMenu();
     public MenuItem statusItem;
-    public MenuItem connectItem;
-    public MenuItem disconnectItem;
+    public MenuItem toggleConnectItem;
     public CheckboxMenuItem autoStatrtCheckbox;
     public Menu dnsMenu;
     public CheckboxMenuItem[] dnsItems;
@@ -42,8 +41,7 @@ public class StatusBarMenu {
     public void itemCreate(){
         statusItem = new MenuItem("Status: Disconnected - 🔴");
         statusItem.setEnabled(false);
-        connectItem = new MenuItem("Connect VPN");
-        disconnectItem = new MenuItem("Disconnect");
+        toggleConnectItem = new MenuItem("Connect VPN");
         autoStatrtCheckbox = new CheckboxMenuItem("Auto Connect",SettingsParser.auto_start());
         
         dnsMenu = new Menu("DNS Settings");
@@ -75,7 +73,6 @@ public class StatusBarMenu {
             AddFileButtonText = "Add Config...";
         }
         addFileAndRemove = new MenuItem(AddFileButtonText);
-        disconnectItem.setEnabled(false);
         exitItem = new MenuItem("Exit");
     }
 
@@ -86,7 +83,7 @@ public class StatusBarMenu {
             FileUtils.DNStatusWrite(id, pathBase);
             updateDnsUI(id);
             
-            if (disconnectItem.isEnabled()) {
+            if (toggleConnectItem.getLabel().equals("Disconnect")) {
                 restartVpn();
             }
         }
@@ -142,15 +139,13 @@ public class StatusBarMenu {
         System.out.println("Restarting VPN to apply new DNS...");
         eWireproxy.stopWireproxy();
         statusItem.setLabel("Status: Reconnecting...");
-        connectItem.setEnabled(true);
-        disconnectItem.setEnabled(false);
+        toggleConnectItem.setLabel("Connect VPN");
         addFileAndRemove.setEnabled(true);
 
         if (eWireproxy.startWireproxy()) {
             addFileAndRemove.setEnabled(false);
             statusItem.setLabel("Status: Connected 🟢");
-            connectItem.setEnabled(false);
-            disconnectItem.setEnabled(true);
+            toggleConnectItem.setLabel("Disconnect");
         } else {
             statusItem.setLabel("Status: Error 🔴");
         }
@@ -197,8 +192,7 @@ public class StatusBarMenu {
                 // На всякий случай останавливаем прокси перед удалением конфига
                 eWireproxy.stopWireproxy();
                 statusItem.setLabel("Status: Disconnected 🔴");
-                connectItem.setEnabled(true);
-                disconnectItem.setEnabled(false);
+                toggleConnectItem.setLabel("Connect VPN");
 
                 Path fileToDelete = configPath.resolve("AmneziaConfig.conf");
                 Files.deleteIfExists(fileToDelete);
@@ -215,38 +209,32 @@ public class StatusBarMenu {
         }
        });
 
-       disconnectItem.addActionListener(e -> {
-            addFileAndRemove.setEnabled(true); // Делаем кнопку Remove Config активной
-            eWireproxy.stopWireproxy();
-            statusItem.setLabel("Status: Disconnected 🔴");
-            connectItem.setEnabled(true);
-            disconnectItem.setEnabled(false);
-        });
-        exitItem.addActionListener(e -> {
-            eWireproxy.stopWireproxy();
-            System.exit(0);
-        });
-        connectItem.addActionListener(e -> {
-            statusItem.setLabel("Status: Connecting...");
-
-            // Сначала пробуем запустить наш Go бинарник
-            if (eWireproxy.startWireproxy()) {
-                addFileAndRemove.setEnabled(false); // Далаем кнопку Remove Config не активной
-                statusItem.setLabel("Status: Connected 🟢");
-                connectItem.setEnabled(false);
-                disconnectItem.setEnabled(true);
+       toggleConnectItem.addActionListener(e -> {
+            if (toggleConnectItem.getLabel().equals("Connect VPN")) {
+                statusItem.setLabel("Status: Connecting...");
+                if (eWireproxy.startWireproxy()) {
+                    addFileAndRemove.setEnabled(false);
+                    statusItem.setLabel("Status: Connected 🟢");
+                    toggleConnectItem.setLabel("Disconnect");
+                } else {
+                    statusItem.setLabel("Status: Error 🔴");
+                }
             } else {
-                System.out.println("Ошибка запуска утилиты");
+                addFileAndRemove.setEnabled(true);
+                eWireproxy.stopWireproxy();
+                statusItem.setLabel("Status: Disconnected 🔴");
+                toggleConnectItem.setLabel("Connect VPN");
             }
         });
+
+        exitItem.addActionListener(e -> {
 
     }
 
     public void addPopupMenu(){
         menu.add(statusItem); // Список элементов в интерфейсе
         menu.addSeparator();
-        menu.add(connectItem);
-        menu.add(disconnectItem);
+        menu.add(toggleConnectItem);
         menu.add(autoStatrtCheckbox); // Чекбокс автозапуска
         menu.add(dnsMenu);
         menu.add(addFileAndRemove);

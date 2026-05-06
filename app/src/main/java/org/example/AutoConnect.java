@@ -11,8 +11,7 @@ public class AutoConnect {
                 AutoStart.setAutoLaunch(true);
                 statusBarMenu.addFileAndRemove.setEnabled(false); // Далаем кнопку Remove Config не активной
                 statusBarMenu.statusItem.setLabel("Status: Connected 🟢");
-                statusBarMenu.connectItem.setEnabled(false);
-                statusBarMenu.disconnectItem.setEnabled(true);
+                statusBarMenu.toggleConnectItem.setLabel("Disconnect");
             } else {
                 System.out.println("Ошибка запуска утилиты");
             }
