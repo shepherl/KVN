@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.swing.JOptionPane;
 import org.example.dns.Changedns;
 import org.example.dns.DnsProvider;
 
@@ -25,6 +26,7 @@ public class StatusBarMenu {
     public Menu dnsMenu;
     public Menu engineMenu;
     public Menu profilesMenu;
+    public MenuItem portItem;
     public CheckboxMenuItem wireproxyItem;
     public CheckboxMenuItem operaItem;
     public CheckboxMenuItem[] dnsItems;
@@ -82,6 +84,8 @@ public class StatusBarMenu {
 
         profilesMenu = new Menu("Profiles");
         refreshProfilesMenu();
+
+        portItem = new MenuItem("Proxy Port: " + SettingsParser.getProxyPort());
         
         // Обновляем proxy.conf актуальным профилем при старте
         updateProxyConf(SettingsParser.getActiveProfile());
@@ -176,12 +180,13 @@ public class StatusBarMenu {
 
     private void updateProxyConf(String profileName) {
         try {
+            int port = SettingsParser.getProxyPort();
             Path proxyConfPath = pathBase.resolve("proxy.conf");
             String configPathStr = profileName.isEmpty() ? "" : pathBase.resolve("configs").resolve(profileName).toString();
             String content = "WGConfig = " + configPathStr + "\r\n" +
                              "\r\n" +
                              "[Socks5]\r\n" +
-                             "BindAddress = 127.0.0.1:1080";
+                             "BindAddress = 127.0.0.1:" + port;
             Files.writeString(proxyConfPath, content);
         } catch (IOException e) { e.printStackTrace(); }
     }
@@ -242,10 +247,11 @@ public class StatusBarMenu {
     }
 
     private boolean startCurrentProxy(int engine) {
+        int port = SettingsParser.getProxyPort();
         if (engine == 0) {
             return eWireproxy.startWireproxy();
         } else {
-            return OperaProxy.startOperaProxy();
+            return OperaProxy.startOperaProxy(port);
         }
     }
 
@@ -372,6 +378,32 @@ public class StatusBarMenu {
             }
         });
 
+        portItem.addActionListener(e -> {
+            String input = JOptionPane.showInputDialog(null, 
+                "Enter Proxy Port (1024-65535):", 
+                "Settings", 
+                JOptionPane.QUESTION_MESSAGE);
+            
+            if (input != null && !input.isEmpty()) {
+                try {
+                    int newPort = Integer.parseInt(input.trim());
+                    if (newPort >= 1024 && newPort <= 65535) {
+                        FileUtils.ProxyPortWrite(newPort, pathBase);
+                        portItem.setLabel("Proxy Port: " + newPort);
+                        updateProxyConf(SettingsParser.getActiveProfile());
+                        
+                        if (toggleConnectItem.getLabel().equals("Disconnect")) {
+                            restartVpn();
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Port must be between 1024 and 65535", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Invalid port number", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
         exitItem.addActionListener(e -> {
             int engine = SettingsParser.getProxyEngine();
             stopCurrentProxy(engine);
@@ -397,6 +429,7 @@ public class StatusBarMenu {
         }
 
         menu.addSeparator();
+        menu.add(portItem);
         menu.add(exitItem);
     }
 

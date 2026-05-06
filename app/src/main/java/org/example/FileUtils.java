@@ -93,6 +93,10 @@ public static void AutoStartStatusrWrite(boolean start_status, Path basePath) {
         updateJsonField("activeProfile", profileName, true, basePath);
     }
 
+    public static void ProxyPortWrite(int port, Path basePath) {
+        updateJsonField("proxyPort", String.valueOf(port), false, basePath);
+    }
+
     private static void updateJsonField(String key, String value, boolean isString, Path basePath) {
         Path path = basePath.resolve("AutoStartStatus.json");
         try {

@@ -25,7 +25,8 @@ public class FileCheck{
                                         "\"autoStart\": 0,\n" + 
                                         "\"DNStatus\": 1,\n" + 
                                         "\"ProxyEngine\": 0,\n" +
-                                        "\"activeProfile\": \"\"\n" +
+                                        "\"activeProfile\": \"\",\n" +
+                                        "\"proxyPort\": 1080\n" +
                                         "}");
                 }catch(IOException e){ e.printStackTrace(); }
             }
@@ -53,7 +54,8 @@ public class FileCheck{
                                         "\"autoStart\": 0,\n" + 
                                         "\"DNStatus\": 1,\n" + 
                                         "\"ProxyEngine\": 0,\n" +
-                                        "\"activeProfile\": \"\"\n" +
+                                        "\"activeProfile\": \"\",\n" +
+                                        "\"proxyPort\": 1080\n" +
                                         "}");
                 }catch(IOException e){ e.printStackTrace(); }
             }

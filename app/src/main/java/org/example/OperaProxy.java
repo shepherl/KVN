@@ -11,7 +11,7 @@ import java.util.Optional;
 public class OperaProxy {
     private static Process operaProcess = null;
 
-    public static boolean startOperaProxy() {
+    public static boolean startOperaProxy(int port) {
         try {
             Optional<File> optionalFile = proxyFileSearch();
             if (optionalFile.isEmpty()) {
@@ -23,12 +23,12 @@ public class OperaProxy {
             // Снимаем карантин
             rmQuarantine(proxyFile);
 
-            System.out.println("Запустился Opera Proxy (SOCKS5 mode on 1080)");
-            // Команда: ./opera-proxy.darwin-amd64 -country EU -bind-address 127.0.0.1:1080 -socks-mode
+            System.out.println("Запустился Opera Proxy (SOCKS5 mode on " + port + ")");
+            // Команда: ./opera-proxy.darwin-amd64 -country EU -bind-address 127.0.0.1:ПОРТ -socks-mode
             ProcessBuilder pb = new ProcessBuilder(
                 proxyFile.getAbsolutePath(), 
                 "-country", "EU", 
-                "-bind-address", "127.0.0.1:1080",
+                "-bind-address", "127.0.0.1:" + port,
                 "-socks-mode"
             );
             pb.directory(proxyFile.getParentFile());
