@@ -180,8 +180,10 @@ public class StatusBarMenu {
             String directory = fd.getDirectory();
             String filename = fd.getFile();
             if (directory != null && filename != null) {
-                String fullPath = directory + filename;
-                FileUtils.copyFile(Path.of(fullPath),Path.of(configPath + "AmneziaConfig.conf"));
+                Path sourcePath = Path.of(directory, filename);
+                Path targetPath = configPath.resolve("AmneziaConfig.conf");
+                
+                FileUtils.copyFile(sourcePath, targetPath);
                 
                 // Детектируем DNS из нового файла
                 int detectedDnsId = detectCurrentDns();
@@ -198,7 +200,8 @@ public class StatusBarMenu {
                 connectItem.setEnabled(true);
                 disconnectItem.setEnabled(false);
 
-                Files.delete(Path.of(configPath + "AmneziaConfig.conf"));
+                Path fileToDelete = configPath.resolve("AmneziaConfig.conf");
+                Files.deleteIfExists(fileToDelete);
                 
                 // После удаления конфига сбрасываем на Cloudflare (1)
                 updateDnsUI(1);
@@ -207,7 +210,7 @@ public class StatusBarMenu {
                 System.out.println("Config removed successfully.");
             }catch(IOException a){
                 System.err.println("Could not delete config file: " + a.getMessage());
-                // Можно добавить уведомление пользователю здесь
+                a.printStackTrace();
             }
         }
        });

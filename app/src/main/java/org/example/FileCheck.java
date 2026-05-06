@@ -17,11 +17,11 @@ public class FileCheck{
     public void startStart(){
     if (!FileUtils.checkDirectoryExists(pathBase)) {
             FileUtils.createDirectory(Path.of(configPath));
-            if(!Files.exists(Path.of(configPath + "AutoStartStatus.json"))){ // Проверка существования файла
-                FileUtils.createfiles(Path.of(configPath + "AutoStartStatus.json"));
+            if(!Files.exists(pathBase.resolve("AutoStartStatus.json"))){ // Проверка существования файла
+                FileUtils.createfiles(pathBase.resolve("AutoStartStatus.json"));
                 try{
                 System.out.println("Файла нет");
-                Files.writeString(Path.of(configPath + "AutoStartStatus.json"),"{\n" + //
+                Files.writeString(pathBase.resolve("AutoStartStatus.json"),"{\n" + //
                                         "\"autoStart\": 0,\n" + //
                                         "\"DNStatus\": 1\n" + //
                                         "}");
@@ -29,10 +29,10 @@ public class FileCheck{
                     e.getMessage();
                 }
             }
-            if(!Files.exists(Path.of(configPath+ "proxy.conf"))){
-                FileUtils.createfiles(Path.of(configPath + "proxy.conf"));
+            if(!Files.exists(pathBase.resolve("proxy.conf"))){
+                FileUtils.createfiles(pathBase.resolve("proxy.conf"));
                 try{
-                Files.writeString(Path.of(configPath + "proxy.conf"),"WGConfig = " + configPath + "AmneziaConfig.conf\r\n" + //
+                Files.writeString(pathBase.resolve("proxy.conf"),"WGConfig = " + pathBase.resolve("AmneziaConfig.conf").toString() + "\r\n" + //
                                         "\r\n" + //
                                         "[Socks5]\r\n" + //
                                         "BindAddress = 127.0.0.1:1080");
@@ -42,11 +42,11 @@ public class FileCheck{
             }
 
         }else{
-            if(!Files.exists(Path.of(configPath + "AutoStartStatus.json"))){ // Проверка существования файла
+            if(!Files.exists(pathBase.resolve("AutoStartStatus.json"))){ // Проверка существования файла
 
-                FileUtils.createfiles(Path.of(configPath + "AutoStartStatus.json"));
+                FileUtils.createfiles(pathBase.resolve("AutoStartStatus.json"));
                 try{
-                Files.writeString(Path.of(configPath + "AutoStartStatus.json"),"{\n" + //
+                Files.writeString(pathBase.resolve("AutoStartStatus.json"),"{\n" + //
                                         "\"autoStart\": 0,\n" + //
                                         "\"DNStatus\": 1\n" + //
                                         "}");
@@ -54,10 +54,10 @@ public class FileCheck{
                     e.getMessage();
                 }
             }
-            if(!Files.exists(Path.of(configPath + "proxy.conf"))){
-                FileUtils.createfiles(Path.of(configPath + "proxy.conf"));
+            if(!Files.exists(pathBase.resolve("proxy.conf"))){
+                FileUtils.createfiles(pathBase.resolve("proxy.conf"));
                 try{
-                Files.writeString(Path.of(configPath + "proxy.conf"),"WGConfig = " + configPath +"AmneziaConfig.conf\r\n" + //
+                Files.writeString(pathBase.resolve("proxy.conf"),"WGConfig = " + pathBase.resolve("AmneziaConfig.conf").toString() + "\r\n" + //
                                         "\r\n" + //
                                         "[Socks5]\r\n" + //
                                         "BindAddress = 127.0.0.1:1080");

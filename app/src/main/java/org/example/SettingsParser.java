@@ -25,9 +25,7 @@ public class SettingsParser { // Парсер значений из json
 
     public static boolean auto_start(){ // Проверка значения автозапуска в файле
         String userName = System.getProperty("user.name");
-        String configPath = "/Users/" + userName + "/KVN/";
-
-        Path path = Path.of(configPath + "AutoStartStatus.json");
+        Path path = Path.of("/Users", userName, "KVN", "AutoStartStatus.json");
         String content;
         try{
             content = Files.readString(path);
@@ -47,9 +45,7 @@ public class SettingsParser { // Парсер значений из json
 
     public static int getDNStatus() {
         String userName = System.getProperty("user.name");
-        String configPath = "/Users/" + userName + "/KVN/";
-
-        Path path = Path.of(configPath + "AutoStartStatus.json");
+        Path path = Path.of("/Users", userName, "KVN", "AutoStartStatus.json");
         try {
             String content = Files.readString(path);
             String val = findValue(content, "DNStatus");
