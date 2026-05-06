@@ -379,7 +379,11 @@ public class StatusBarMenu {
         });
 
         portItem.addActionListener(e -> {
-            String input = JOptionPane.showInputDialog(null, 
+            // Создаем временное окно-заглушку, чтобы диалог был поверх всех окон
+            javax.swing.JFrame topFrame = new javax.swing.JFrame();
+            topFrame.setAlwaysOnTop(true);
+            
+            String input = JOptionPane.showInputDialog(topFrame, 
                 "Enter Proxy Port (1024-65535):", 
                 "Settings", 
                 JOptionPane.QUESTION_MESSAGE);
@@ -396,12 +400,13 @@ public class StatusBarMenu {
                             restartVpn();
                         }
                     } else {
-                        JOptionPane.showMessageDialog(null, "Port must be between 1024 and 65535", "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(topFrame, "Port must be between 1024 and 65535", "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(null, "Invalid port number", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(topFrame, "Invalid port number", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
+            topFrame.dispose(); // Освобождаем ресурсы
         });
 
         exitItem.addActionListener(e -> {
