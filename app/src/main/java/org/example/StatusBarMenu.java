@@ -89,6 +89,7 @@ public class StatusBarMenu {
 
         exitItem = new MenuItem("Exit");
         updateEngineUI(currentEngine);
+        updateDnsUI(currentDnsId);
     }
 
     private void refreshProfilesMenu() {
@@ -209,6 +210,9 @@ public class StatusBarMenu {
     private void updateEngineUI(int engine) {
         wireproxyItem.setState(engine == 0);
         operaItem.setState(engine == 1);
+        
+        String label = (engine == 0) ? "Wireproxy (AWG)" : "Opera Proxy";
+        engineMenu.setLabel("Engine: " + label);
     }
 
     private boolean startCurrentProxy(int engine) {
@@ -253,11 +257,14 @@ public class StatusBarMenu {
         }
         customDnsItem.setState(false);
         
+        String dnsLabel = "Custom";
         if (id >= 1 && id <= 6) {
             dnsItems[id - 1].setState(true);
+            dnsLabel = DnsProvider.findById(id).map(DnsProvider::getLabel).orElse("Custom");
         } else if (id == 7) {
             customDnsItem.setState(true);
         }
+        dnsMenu.setLabel("DNS: " + dnsLabel);
     }
 
     private int detectCurrentDns() {
