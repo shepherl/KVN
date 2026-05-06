@@ -23,7 +23,8 @@ public class FileCheck{
                 System.out.println("Файла нет");
                 Files.writeString(pathBase.resolve("AutoStartStatus.json"),"{\n" + //
                                         "\"autoStart\": 0,\n" + //
-                                        "\"DNStatus\": 1\n" + //
+                                        "\"DNStatus\": 1,\n" + //
+                                        "\"ProxyEngine\": 0\n" + //
                                         "}");
                 }catch(IOException e){
                     e.getMessage();
@@ -48,7 +49,8 @@ public class FileCheck{
                 try{
                 Files.writeString(pathBase.resolve("AutoStartStatus.json"),"{\n" + //
                                         "\"autoStart\": 0,\n" + //
-                                        "\"DNStatus\": 1\n" + //
+                                        "\"DNStatus\": 1,\n" + //
+                                        "\"ProxyEngine\": 0\n" + //
                                         "}");
                 }catch(IOException e){
                     e.getMessage();

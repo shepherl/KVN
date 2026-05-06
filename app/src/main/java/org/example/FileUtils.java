@@ -93,4 +93,15 @@ public static void AutoStartStatusrWrite(boolean start_status, Path basePath) {
         }
     }
 
+    public static void ProxyEngineWrite(int engine, Path basePath) {
+        Path path = basePath.resolve("AutoStartStatus.json");
+        try {
+            String content = Files.readString(path);
+            content = content.replaceAll("\"ProxyEngine\"\\s*:\\s*\\d+", "\"ProxyEngine\": " + engine);
+            Files.writeString(path, content);
+        } catch (IOException e) {
+            System.err.println("Ошибка при записи ProxyEngine: " + e.getMessage());
+        }
+    }
+
 }

@@ -23,6 +23,9 @@ public class StatusBarMenu {
     public MenuItem toggleConnectItem;
     public CheckboxMenuItem autoStatrtCheckbox;
     public Menu dnsMenu;
+    public Menu engineMenu;
+    public CheckboxMenuItem wireproxyItem;
+    public CheckboxMenuItem operaItem;
     public CheckboxMenuItem[] dnsItems;
     public CheckboxMenuItem customDnsItem;
     public MenuItem addFileAndRemove;
@@ -44,6 +47,17 @@ public class StatusBarMenu {
         toggleConnectItem = new MenuItem("Connect VPN");
         autoStatrtCheckbox = new CheckboxMenuItem("Auto Connect",SettingsParser.auto_start());
         
+        engineMenu = new Menu("Proxy Engine");
+        int currentEngine = SettingsParser.getProxyEngine();
+        wireproxyItem = new CheckboxMenuItem("Wireproxy (AWG)", currentEngine == 0);
+        operaItem = new CheckboxMenuItem("Opera Proxy", currentEngine == 1);
+        
+        wireproxyItem.addItemListener(e -> handleEngineSelection(0));
+        operaItem.addItemListener(e -> handleEngineSelection(1));
+        
+        engineMenu.add(wireproxyItem);
+        engineMenu.add(operaItem);
+
         dnsMenu = new Menu("DNS Settings");
         DnsProvider[] providers = DnsProvider.values();
         dnsItems = new CheckboxMenuItem[providers.length];
@@ -74,6 +88,60 @@ public class StatusBarMenu {
         }
         addFileAndRemove = new MenuItem(AddFileButtonText);
         exitItem = new MenuItem("Exit");
+        updateEngineUI(currentEngine);
+    }
+
+    private void handleEngineSelection(int engine) {
+        int oldEngine = SettingsParser.getProxyEngine();
+        if (oldEngine == engine) {
+            updateEngineUI(engine);
+            return;
+        }
+
+        boolean wasRunning = toggleConnectItem.getLabel().equals("Disconnect");
+        if (wasRunning) {
+            stopCurrentProxy(oldEngine);
+        }
+
+        FileUtils.ProxyEngineWrite(engine, pathBase);
+        updateEngineUI(engine);
+
+        if (wasRunning) {
+            if (startCurrentProxy(engine)) {
+                statusItem.setLabel("Status: Connected 🟢");
+                toggleConnectItem.setLabel("Disconnect");
+            } else {
+                statusItem.setLabel("Status: Error 🔴");
+                toggleConnectItem.setLabel("Connect VPN");
+                addFileAndRemove.setEnabled(engine == 0);
+            }
+        }
+    }
+
+    private void updateEngineUI(int engine) {
+        wireproxyItem.setState(engine == 0);
+        operaItem.setState(engine == 1);
+        dnsMenu.setEnabled(engine == 0);
+        // Кнопка Add/Remove Config нужна только для Wireproxy
+        if (toggleConnectItem.getLabel().equals("Connect VPN")) {
+            addFileAndRemove.setEnabled(engine == 0);
+        }
+    }
+
+    private boolean startCurrentProxy(int engine) {
+        if (engine == 0) {
+            return eWireproxy.startWireproxy();
+        } else {
+            return OperaProxy.startOperaProxy();
+        }
+    }
+
+    private void stopCurrentProxy(int engine) {
+        if (engine == 0) {
+            eWireproxy.stopWireproxy();
+        } else {
+            OperaProxy.stopOperaProxy();
+        }
     }
 
     private void handleDnsSelection(int id, DnsProvider provider) {
@@ -136,14 +204,15 @@ public class StatusBarMenu {
     }
 
     private void restartVpn() {
-        System.out.println("Restarting VPN to apply new DNS...");
-        eWireproxy.stopWireproxy();
+        int engine = SettingsParser.getProxyEngine();
+        System.out.println("Restarting VPN to apply new settings...");
+        stopCurrentProxy(engine);
         statusItem.setLabel("Status: Reconnecting...");
         toggleConnectItem.setLabel("Connect VPN");
-        addFileAndRemove.setEnabled(true);
+        if (engine == 0) addFileAndRemove.setEnabled(true);
 
-        if (eWireproxy.startWireproxy()) {
-            addFileAndRemove.setEnabled(false);
+        if (startCurrentProxy(engine)) {
+            if (engine == 0) addFileAndRemove.setEnabled(false);
             statusItem.setLabel("Status: Connected 🟢");
             toggleConnectItem.setLabel("Disconnect");
         } else {
@@ -190,7 +259,8 @@ public class StatusBarMenu {
         }else{
             try{
                 // На всякий случай останавливаем прокси перед удалением конфига
-                eWireproxy.stopWireproxy();
+                int engine = SettingsParser.getProxyEngine();
+                stopCurrentProxy(engine);
                 statusItem.setLabel("Status: Disconnected 🔴");
                 toggleConnectItem.setLabel("Connect VPN");
 
@@ -210,25 +280,27 @@ public class StatusBarMenu {
        });
 
        toggleConnectItem.addActionListener(e -> {
+            int engine = SettingsParser.getProxyEngine();
             if (toggleConnectItem.getLabel().equals("Connect VPN")) {
                 statusItem.setLabel("Status: Connecting...");
-                if (eWireproxy.startWireproxy()) {
-                    addFileAndRemove.setEnabled(false);
+                if (startCurrentProxy(engine)) {
+                    if (engine == 0) addFileAndRemove.setEnabled(false);
                     statusItem.setLabel("Status: Connected 🟢");
                     toggleConnectItem.setLabel("Disconnect");
                 } else {
                     statusItem.setLabel("Status: Error 🔴");
                 }
             } else {
-                addFileAndRemove.setEnabled(true);
-                eWireproxy.stopWireproxy();
+                if (engine == 0) addFileAndRemove.setEnabled(true);
+                stopCurrentProxy(engine);
                 statusItem.setLabel("Status: Disconnected 🔴");
                 toggleConnectItem.setLabel("Connect VPN");
             }
         });
 
         exitItem.addActionListener(e -> {
-            eWireproxy.stopWireproxy();
+            int engine = SettingsParser.getProxyEngine();
+            stopCurrentProxy(engine);
             System.exit(0);
         });
     }
@@ -238,6 +310,7 @@ public class StatusBarMenu {
         menu.addSeparator();
         menu.add(toggleConnectItem);
         menu.add(autoStatrtCheckbox); // Чекбокс автозапуска
+        menu.add(engineMenu);
         menu.add(dnsMenu);
         menu.add(addFileAndRemove);
         menu.addSeparator();

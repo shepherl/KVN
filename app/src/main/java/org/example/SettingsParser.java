@@ -58,4 +58,19 @@ public class SettingsParser { // Парсер значений из json
         return 1; // Default
     }
 
+    public static int getProxyEngine() {
+        String userName = System.getProperty("user.name");
+        Path path = Path.of("/Users", userName, "KVN", "AutoStartStatus.json");
+        try {
+            String content = Files.readString(path);
+            String val = findValue(content, "ProxyEngine");
+            if (!val.equals("Not found")) {
+                return Integer.parseInt(val.trim());
+            }
+        } catch (Exception e) {
+            // Если поля нет, возвращаем 0 по умолчанию
+        }
+        return 0; // Default: Wireproxy
+    }
+
 }
