@@ -82,25 +82,35 @@ public static void AutoStartStatusrWrite(boolean start_status, Path basePath) {
     }
 
     public static void DNStatusWrite(int status, Path basePath) {
-        Path path = basePath.resolve("AutoStartStatus.json");
-        try {
-            String content = Files.readString(path);
-            // Используем регулярное выражение для замены значения DNStatus
-            content = content.replaceAll("\"DNStatus\"\\s*:\\s*\\d+", "\"DNStatus\": " + status);
-            Files.writeString(path, content);
-        } catch (IOException e) {
-            System.err.println("Ошибка при записи DNStatus: " + e.getMessage());
-        }
+        updateJsonField("DNStatus", String.valueOf(status), basePath);
     }
 
     public static void ProxyEngineWrite(int engine, Path basePath) {
+        updateJsonField("ProxyEngine", String.valueOf(engine), basePath);
+    }
+
+    private static void updateJsonField(String key, String value, Path basePath) {
         Path path = basePath.resolve("AutoStartStatus.json");
         try {
-            String content = Files.readString(path);
-            content = content.replaceAll("\"ProxyEngine\"\\s*:\\s*\\d+", "\"ProxyEngine\": " + engine);
+            String content = Files.readString(path).trim();
+            String pattern = "\"" + key + "\"\\s*:\\s*\\d+";
+            if (content.matches("(?s).*" + pattern + ".*")) {
+                content = content.replaceAll(pattern, "\"" + key + "\": " + value);
+            } else {
+                // Если поля нет, добавляем его перед последней закрывающей скобкой
+                int lastBrace = content.lastIndexOf("}");
+                if (lastBrace != -1) {
+                    String prefix = content.substring(0, lastBrace).trim();
+                    if (prefix.endsWith("{")) {
+                        content = prefix + "\"" + key + "\": " + value + "}";
+                    } else {
+                        content = prefix + ",\n\"" + key + "\": " + value + "}";
+                    }
+                }
+            }
             Files.writeString(path, content);
         } catch (IOException e) {
-            System.err.println("Ошибка при записи ProxyEngine: " + e.getMessage());
+            System.err.println("Ошибка при записи поля " + key + ": " + e.getMessage());
         }
     }
 

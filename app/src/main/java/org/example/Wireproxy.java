@@ -56,7 +56,8 @@ public class Wireproxy {
 
     public void stopWireproxy() {
         if (wireproxyProcess != null && wireproxyProcess.isAlive()) {
-            wireproxyProcess.destroy(); // Вот здесь мы реально убиваем процесс в системе
+            wireproxyProcess.destroyForcibly(); // Принудительное завершение
+            wireproxyProcess = null;
             System.out.println("DEBUG: wireproxy stopped.");
         }
     }

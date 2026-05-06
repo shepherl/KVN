@@ -92,29 +92,31 @@ public class StatusBarMenu {
     }
 
     private void handleEngineSelection(int engine) {
-        int oldEngine = SettingsParser.getProxyEngine();
-        if (oldEngine == engine) {
-            updateEngineUI(engine);
-            return;
-        }
-
+        // Мы НЕ выходим, если старый движок совпадает с новым, на случай рассинхрона UI
+        
         boolean wasRunning = toggleConnectItem.getLabel().equals("Disconnect");
-        if (wasRunning) {
-            stopCurrentProxy(oldEngine);
-        }
-
+        
+        // Всегда останавливаем всё перед переключением
+        stopCurrentProxy(0); // Wireproxy
+        stopCurrentProxy(1); // Opera
+        
         FileUtils.ProxyEngineWrite(engine, pathBase);
         updateEngineUI(engine);
 
         if (wasRunning) {
+            statusItem.setLabel("Status: Connecting...");
             if (startCurrentProxy(engine)) {
                 statusItem.setLabel("Status: Connected 🟢");
                 toggleConnectItem.setLabel("Disconnect");
+                if (engine == 0) addFileAndRemove.setEnabled(false);
             } else {
                 statusItem.setLabel("Status: Error 🔴");
                 toggleConnectItem.setLabel("Connect VPN");
-                addFileAndRemove.setEnabled(engine == 0);
+                if (engine == 0) addFileAndRemove.setEnabled(true);
             }
+        } else {
+            statusItem.setLabel("Status: Disconnected 🔴");
+            toggleConnectItem.setLabel("Connect VPN");
         }
     }
 

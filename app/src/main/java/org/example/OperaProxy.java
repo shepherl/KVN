@@ -41,7 +41,8 @@ public class OperaProxy {
 
     public static void stopOperaProxy() {
         if (operaProcess != null && operaProcess.isAlive()) {
-            operaProcess.destroy();
+            operaProcess.destroyForcibly();
+            operaProcess = null;
             System.out.println("DEBUG: opera-proxy stopped.");
         }
     }
