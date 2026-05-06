@@ -42,8 +42,24 @@ public class SettingsParser { // Парсер значений из json
             e.printStackTrace();
             return false;
         }
+    }
 
 
+    public static int getDNStatus() {
+        String userName = System.getProperty("user.name");
+        String configPath = "/Users/" + userName + "/KVN/";
+
+        Path path = Path.of(configPath + "AutoStartStatus.json");
+        try {
+            String content = Files.readString(path);
+            String val = findValue(content, "DNStatus");
+            if (!val.equals("Not found")) {
+                return Integer.parseInt(val.trim());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 1; // Default
     }
 
 }

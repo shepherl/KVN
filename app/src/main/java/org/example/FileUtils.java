@@ -81,4 +81,16 @@ public static void AutoStartStatusrWrite(boolean start_status, Path basePath) {
 
     }
 
+    public static void DNStatusWrite(int status, Path basePath) {
+        Path path = basePath.resolve("AutoStartStatus.json");
+        try {
+            String content = Files.readString(path);
+            // Используем регулярное выражение для замены значения DNStatus
+            content = content.replaceAll("\"DNStatus\"\\s*:\\s*\\d+", "\"DNStatus\": " + status);
+            Files.writeString(path, content);
+        } catch (IOException e) {
+            System.err.println("Ошибка при записи DNStatus: " + e.getMessage());
+        }
+    }
+
 }

@@ -23,7 +23,7 @@ public class FileCheck{
                 System.out.println("Файла нет");
                 Files.writeString(Path.of(configPath + "AutoStartStatus.json"),"{\n" + //
                                         "\"autoStart\": 0,\n" + //
-                                        "\"Lol\": 2\n" + //
+                                        "\"DNStatus\": 1\n" + //
                                         "}");
                 }catch(IOException e){
                     e.getMessage();
@@ -47,8 +47,8 @@ public class FileCheck{
                 FileUtils.createfiles(Path.of(configPath + "AutoStartStatus.json"));
                 try{
                 Files.writeString(Path.of(configPath + "AutoStartStatus.json"),"{\n" + //
-                                        " \"autoStart\": 0,\n" + //
-                                        " \"Lol\": 2\n" + //
+                                        "\"autoStart\": 0,\n" + //
+                                        "\"DNStatus\": 1\n" + //
                                         "}");
                 }catch(IOException e){
                     e.getMessage();
