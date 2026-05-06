@@ -113,18 +113,27 @@ public class StatusBarMenu {
             List<String> lines = Files.readAllLines(fullConfigPath);
             for (String line : lines) {
                 line = line.trim();
+                // Игнорируем пустые строки и комментарии (# или ;)
+                if (line.isEmpty() || line.startsWith("#") || line.startsWith(";")) continue;
+                
                 if (line.toLowerCase().startsWith("dns")) {
-                    String dnsValue = line.substring(line.indexOf("=") + 1).trim();
+                    int eqIndex = line.indexOf("=");
+                    if (eqIndex == -1) continue;
+                    
+                    String dnsValue = line.substring(eqIndex + 1).trim();
                     List<String> addresses = Arrays.stream(dnsValue.split(","))
                             .map(String::trim)
+                            .filter(s -> !s.isEmpty())
                             .collect(Collectors.toList());
+                    
+                    if (addresses.isEmpty()) continue;
                     
                     Optional<DnsProvider> provider = DnsProvider.findByAddresses(addresses);
                     return provider.map(DnsProvider::getId).orElse(7);
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Error reading config for DNS detection: " + e.getMessage());
         }
         return 7;
     }
@@ -183,15 +192,23 @@ public class StatusBarMenu {
             }
         }else{
             try{
+                // На всякий случай останавливаем прокси перед удалением конфига
+                eWireproxy.stopWireproxy();
+                statusItem.setLabel("Status: Disconnected 🔴");
+                connectItem.setEnabled(true);
+                disconnectItem.setEnabled(false);
+
                 Files.delete(Path.of(configPath + "AmneziaConfig.conf"));
-                // После удаления конфига можно сбросить на Cloudflare (1)
+                
+                // После удаления конфига сбрасываем на Cloudflare (1)
                 updateDnsUI(1);
                 FileUtils.DNStatusWrite(1, pathBase);
+                addFileAndRemove.setLabel("Add Config...");
+                System.out.println("Config removed successfully.");
             }catch(IOException a){
-                a.getMessage();
+                System.err.println("Could not delete config file: " + a.getMessage());
+                // Можно добавить уведомление пользователю здесь
             }
-
-            addFileAndRemove.setLabel("Add Config...");
         }
        });
 
