@@ -20,6 +20,11 @@ public class Wireproxy {
 
     public boolean startWireproxy() {
         try {
+          // Принудительно убиваем старые процессы в системе перед запуском
+          try {
+              new ProcessBuilder("pkill", "-9", "wireproxy").start().waitFor();
+          } catch (Exception ignored) {}
+
           Optional<File> optionalproxyFile = proxyFileSearch();
           File proxyFile;
             if(optionalproxyFile.isPresent()){

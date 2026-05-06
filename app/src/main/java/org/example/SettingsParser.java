@@ -12,14 +12,14 @@ import java.util.regex.Pattern;
 public class SettingsParser { // Парсер значений из json
 
     public static String findValue(String json, String key){ // Парсинг json
-        Pattern pattern = Pattern.compile("\"" + key + "\\\"\\s*:\\s*([^,}\\]]+)");
+        // Регулярное выражение, которое ищет "ключ": значение (число или строка в кавычках)
+        Pattern pattern = Pattern.compile("\"" + key + "\"\s*:\s*([^,}\\]\s]+)");
         Matcher matcher = pattern.matcher(json);
 
         if(matcher.find()){
             return matcher.group(1).replace("\"", "").trim();
         }
         return "Not found";
-
     }
 
 

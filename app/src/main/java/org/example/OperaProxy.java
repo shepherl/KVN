@@ -13,6 +13,11 @@ public class OperaProxy {
 
     public static boolean startOperaProxy(int port) {
         try {
+            // Принудительно убиваем старые процессы в системе перед запуском
+            try {
+                new ProcessBuilder("pkill", "-9", "opera-proxy.darwin-amd64").start().waitFor();
+            } catch (Exception ignored) {}
+
             Optional<File> optionalFile = proxyFileSearch();
             if (optionalFile.isEmpty()) {
                 System.err.println("CRITICAL: opera-proxy NOT FOUND!");
