@@ -66,14 +66,15 @@ public class Updater {
                             int choice = showConfirmBlocking("New version found: " + latestVersion + "\nDo you want to download and install it?", "Update Available");
                             
                             if (choice == JOptionPane.YES_OPTION) {
-                                Pattern assetPattern = Pattern.compile("\"browser_download_url\"\\s*:\\s*\"([^\"]+\\.dmg)\"");
+                                // Ищем ссылку на скачивание (.zip или .dmg)
+                                Pattern assetPattern = Pattern.compile("\"browser_download_url\"\\s*:\\s*\"([^\"]+)\"");
                                 Matcher assetMatcher = assetPattern.matcher(json);
                                 
                                 if (assetMatcher.find()) {
                                     String downloadUrl = assetMatcher.group(1);
                                     downloadAndInstall(downloadUrl);
                                 } else {
-                                    showMessageBlocking("Could not find the DMG asset in the latest release.", "Error", JOptionPane.ERROR_MESSAGE);
+                                    showMessageBlocking("Could not find any asset in the latest release.", "Error", JOptionPane.ERROR_MESSAGE);
                                 }
                             }
                         } else {
@@ -91,10 +92,18 @@ public class Updater {
 
     private static void downloadAndInstall(String downloadUrl) {
         try {
-            Path dmgPath = Paths.get("/tmp/KVN_update.dmg");
+            Path downloadPath = Paths.get("/tmp/KVN_update_asset");
+            boolean isZip = downloadUrl.endsWith(".zip");
+            
+            if (isZip) {
+                downloadPath = Paths.get("/tmp/KVN_update.zip");
+            } else {
+                downloadPath = Paths.get("/tmp/KVN_update.dmg");
+            }
+
             System.out.println("Downloading update from: " + downloadUrl);
 
-            // 1. Скачиваем DMG
+            // 1. Скачиваем файл
             HttpClient client = HttpClient.newBuilder()
                     .version(HttpClient.Version.HTTP_1_1)
                     .followRedirects(HttpClient.Redirect.NORMAL)
@@ -104,48 +113,76 @@ public class Updater {
                     .header("User-Agent", "KVN-Updater-App")
                     .GET()
                     .build();
-            HttpResponse<Path> response = client.send(request, HttpResponse.BodyHandlers.ofFile(dmgPath));
+            HttpResponse<Path> response = client.send(request, HttpResponse.BodyHandlers.ofFile(downloadPath));
 
-            if (response.statusCode() == 200) {
-                System.out.println("Download complete. Preparing to install...");
-                
-                // 2. Определяем путь к текущему приложению (ищем .app)
-                String appPath = getAppPath();
-                if (appPath == null) {
-                    System.err.println("Could not determine .app path. Aborting update.");
+            if (response.statusCode() != 200) {
+                showMessageBlocking("Failed to download update. HTTP Status: " + response.statusCode(), "Download Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            System.out.println("Download complete. Preparing to install...");
+
+            Path dmgPath;
+            if (isZip) {
+                // 2a. Распаковываем ZIP и ищем .dmg внутри
+                Path extractDir = Paths.get("/tmp/KVN_update_extracted");
+                // Удаляем старую папку если есть
+                if (Files.exists(extractDir)) {
+                    new ProcessBuilder("rm", "-rf", extractDir.toString()).start().waitFor();
+                }
+                Files.createDirectories(extractDir);
+
+                ProcessBuilder unzip = new ProcessBuilder("unzip", "-o", downloadPath.toString(), "-d", extractDir.toString());
+                unzip.start().waitFor();
+
+                // Ищем .dmg файл внутри распакованной папки
+                dmgPath = Files.walk(extractDir)
+                        .filter(p -> p.toString().endsWith(".dmg"))
+                        .findFirst()
+                        .orElse(null);
+
+                if (dmgPath == null) {
+                    showMessageBlocking("Could not find DMG file inside the downloaded archive.", "Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-
-                // 3. Создаем Bash скрипт для обновления
-                String volumeName = "KVN Installation"; // Имя тома DMG (зависит от настроек jpackage)
-                String scriptContent = "#!/bin/bash\n" +
-                        "sleep 2\n" + // Ждем пока основное приложение завершится
-                        "hdiutil attach /tmp/KVN_update.dmg -nobrowse\n" +
-                        "rm -rf \"" + appPath + "\"\n" +
-                        "cp -R \"/Volumes/" + volumeName + "/KVN.app\" \"" + appPath + "\"\n" +
-                        "hdiutil detach \"/Volumes/" + volumeName + "\" -force\n" +
-                        "rm /tmp/KVN_update.dmg\n" +
-                        "open \"" + appPath + "\"\n";
-
-                Path scriptPath = Paths.get("/tmp/kvn_update.sh");
-                Files.writeString(scriptPath, scriptContent);
-                
-                // Делаем скрипт исполняемым
-                Set<PosixFilePermission> perms = new HashSet<>();
-                perms.add(PosixFilePermission.OWNER_READ);
-                perms.add(PosixFilePermission.OWNER_WRITE);
-                perms.add(PosixFilePermission.OWNER_EXECUTE);
-                Files.setPosixFilePermissions(scriptPath, perms);
-
-                // Предупреждаем пользователя и ждем нажатия OK
-                showMessageBlocking("Update downloaded successfully.\nThe application will now restart to install the update.", "Update Ready", JOptionPane.INFORMATION_MESSAGE);
-
-                // 4. Запускаем скрипт и выходим
-                new ProcessBuilder(scriptPath.toString()).start();
-                System.exit(0);
             } else {
-                showMessageBlocking("Failed to download update. HTTP Status: " + response.statusCode(), "Download Error", JOptionPane.ERROR_MESSAGE);
+                dmgPath = downloadPath;
             }
+
+            // 3. Определяем путь к текущему приложению (ищем .app)
+            String appPath = getAppPath();
+            if (appPath == null) {
+                showMessageBlocking("Could not determine .app path. Aborting update.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // 4. Создаем Bash скрипт для обновления
+            String volumeName = "KVN Installation";
+            String scriptContent = "#!/bin/bash\n" +
+                    "sleep 2\n" +
+                    "hdiutil attach \"" + dmgPath + "\" -nobrowse\n" +
+                    "rm -rf \"" + appPath + "\"\n" +
+                    "cp -R \"/Volumes/" + volumeName + "/KVN.app\" \"" + appPath + "\"\n" +
+                    "hdiutil detach \"/Volumes/" + volumeName + "\" -force\n" +
+                    "rm -rf /tmp/KVN_update.zip /tmp/KVN_update.dmg /tmp/KVN_update_extracted\n" +
+                    "open \"" + appPath + "\"\n";
+
+            Path scriptPath = Paths.get("/tmp/kvn_update.sh");
+            Files.writeString(scriptPath, scriptContent);
+
+            // Делаем скрипт исполняемым
+            Set<PosixFilePermission> perms = new HashSet<>();
+            perms.add(PosixFilePermission.OWNER_READ);
+            perms.add(PosixFilePermission.OWNER_WRITE);
+            perms.add(PosixFilePermission.OWNER_EXECUTE);
+            Files.setPosixFilePermissions(scriptPath, perms);
+
+            // Предупреждаем пользователя и ждем нажатия OK
+            showMessageBlocking("Update downloaded successfully.\nThe application will now restart to install the update.", "Update Ready", JOptionPane.INFORMATION_MESSAGE);
+
+            // 5. Запускаем скрипт и выходим
+            new ProcessBuilder(scriptPath.toString()).start();
+            System.exit(0);
         } catch (Exception e) {
             showMessageBlocking("Failed to download or install update: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
