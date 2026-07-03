@@ -158,14 +158,52 @@ public class Updater {
 
             // 4. Создаем Bash скрипт для обновления
             String volumeName = "KVN Installation";
+            String logFile = "/tmp/kvn_update.log";
             String scriptContent = "#!/bin/bash\n" +
+                    "exec > \"" + logFile + "\" 2>&1\n" +  // Логируем всё в файл
+                    "echo \"=== KVN Update Script ===\"\n" +
                     "sleep 2\n" +
+                    "\n" +
+                    "# Снимаем карантин с DMG\n" +
+                    "xattr -d com.apple.quarantine \"" + dmgPath + "\" 2>/dev/null\n" +
+                    "\n" +
+                    "# Монтируем DMG\n" +
+                    "echo \"Mounting DMG: " + dmgPath + "\"\n" +
                     "hdiutil attach \"" + dmgPath + "\" -nobrowse\n" +
+                    "if [ $? -ne 0 ]; then\n" +
+                    "    echo \"ERROR: Failed to mount DMG\"\n" +
+                    "    exit 1\n" +
+                    "fi\n" +
+                    "\n" +
+                    "# Проверяем что .app есть на смонтированном томе\n" +
+                    "echo \"Looking for app in /Volumes/" + volumeName + "/\"\n" +
+                    "ls -la \"/Volumes/" + volumeName + "/\"\n" +
+                    "if [ ! -d \"/Volumes/" + volumeName + "/KVN.app\" ]; then\n" +
+                    "    echo \"ERROR: KVN.app not found on mounted volume\"\n" +
+                    "    hdiutil detach \"/Volumes/" + volumeName + "\" -force 2>/dev/null\n" +
+                    "    exit 1\n" +
+                    "fi\n" +
+                    "\n" +
+                    "# Только теперь удаляем старое приложение\n" +
+                    "echo \"Removing old app: " + appPath + "\"\n" +
                     "rm -rf \"" + appPath + "\"\n" +
+                    "\n" +
+                    "# Копируем новое приложение\n" +
+                    "echo \"Copying new app...\"\n" +
                     "cp -R \"/Volumes/" + volumeName + "/KVN.app\" \"" + appPath + "\"\n" +
-                    "hdiutil detach \"/Volumes/" + volumeName + "\" -force\n" +
+                    "\n" +
+                    "# Снимаем карантин с нового приложения\n" +
+                    "xattr -dr com.apple.quarantine \"" + appPath + "\" 2>/dev/null\n" +
+                    "\n" +
+                    "# Отмонтируем и чистим\n" +
+                    "echo \"Cleaning up...\"\n" +
+                    "hdiutil detach \"/Volumes/" + volumeName + "\" -force 2>/dev/null\n" +
                     "rm -rf /tmp/KVN_update.zip /tmp/KVN_update.dmg /tmp/KVN_update_extracted\n" +
-                    "open \"" + appPath + "\"\n";
+                    "\n" +
+                    "# Запускаем новое приложение\n" +
+                    "echo \"Launching updated app...\"\n" +
+                    "open \"" + appPath + "\"\n" +
+                    "echo \"Done!\"\n";
 
             Path scriptPath = Paths.get("/tmp/kvn_update.sh");
             Files.writeString(scriptPath, scriptContent);
