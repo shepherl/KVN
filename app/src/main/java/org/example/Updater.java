@@ -161,34 +161,50 @@ public class Updater {
             // 4. Создаем Bash скрипт для обновления
             String volumeName = "KVN Installation";
             String logFile = "/tmp/kvn_update.log";
+            long currentPid = ProcessHandle.current().pid(); // Получаем PID текущего процесса
+            
             String scriptContent = "#!/bin/bash\n" +
                     "exec > \"" + logFile + "\" 2>&1\n" +  // Логируем всё в файл
                     "echo \"=== KVN Update Script ===\"\n" +
-                    "sleep 2\n" +
+                    "echo \"Waiting for Java process " + currentPid + " to exit...\"\n" +
+                    "while kill -0 " + currentPid + " 2>/dev/null; do\n" +
+                    "    sleep 1\n" +
+                    "done\n" +
+                    "echo \"Process exited.\"\n" +
                     "\n" +
                     "# Снимаем карантин с DMG\n" +
                     "xattr -d com.apple.quarantine \"" + dmgPath + "\" 2>/dev/null\n" +
+                    "\n" +
+                    "# Отмонтируем том, если он завис от прошлой попытки\n" +
+                    "hdiutil detach \"/Volumes/" + volumeName + "\" -force 2>/dev/null\n" +
                     "\n" +
                     "# Монтируем DMG\n" +
                     "echo \"Mounting DMG: " + dmgPath + "\"\n" +
                     "hdiutil attach \"" + dmgPath + "\" -nobrowse\n" +
                     "if [ $? -ne 0 ]; then\n" +
                     "    echo \"ERROR: Failed to mount DMG\"\n" +
+                    "    open \"" + appPath + "\"\n" + // Запускаем старое, раз не вышло
                     "    exit 1\n" +
                     "fi\n" +
                     "\n" +
                     "# Проверяем что .app есть на смонтированном томе\n" +
                     "echo \"Looking for app in /Volumes/" + volumeName + "/\"\n" +
-                    "ls -la \"/Volumes/" + volumeName + "/\"\n" +
                     "if [ ! -d \"/Volumes/" + volumeName + "/KVN.app\" ]; then\n" +
                     "    echo \"ERROR: KVN.app not found on mounted volume\"\n" +
                     "    hdiutil detach \"/Volumes/" + volumeName + "\" -force 2>/dev/null\n" +
+                    "    open \"" + appPath + "\"\n" +
                     "    exit 1\n" +
                     "fi\n" +
                     "\n" +
-                    "# Только теперь удаляем старое приложение\n" +
+                    "# Удаляем старое приложение\n" +
                     "echo \"Removing old app: " + appPath + "\"\n" +
                     "rm -rf \"" + appPath + "\"\n" +
+                    "if [ -d \"" + appPath + "\" ]; then\n" +
+                    "    echo \"ERROR: Failed to delete old app (Permission denied or locked).\"\n" +
+                    "    hdiutil detach \"/Volumes/" + volumeName + "\" -force 2>/dev/null\n" +
+                    "    open \"" + appPath + "\"\n" +
+                    "    exit 1\n" +
+                    "fi\n" +
                     "\n" +
                     "# Копируем новое приложение\n" +
                     "echo \"Copying new app...\"\n" +
