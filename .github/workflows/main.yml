@@ -45,7 +45,7 @@ jobs:
           
           echo "Detected modules: $MODULES"
 
-          jlink --add-modules "$MODULES" \
+          jlink --add-modules "$MODULES,jdk.crypto.ec,java.net.http,java.naming" \
                 --strip-debug \
                 --no-man-pages \
                 --no-header-files \
