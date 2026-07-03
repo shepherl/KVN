@@ -42,10 +42,13 @@ public class Updater {
         new Thread(() -> {
             try {
                 System.out.println("Checking for updates...");
-                HttpClient client = HttpClient.newHttpClient();
+                HttpClient client = HttpClient.newBuilder()
+                        .version(HttpClient.Version.HTTP_1_1) // Решает проблемы с TLS handshake
+                        .build();
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create("https://api.github.com/repos/" + GITHUB_REPO + "/releases/latest"))
                         .header("Accept", "application/vnd.github.v3+json")
+                        .header("User-Agent", "KVN-Updater-App") // GitHub API требует User-Agent
                         .GET()
                         .build();
 
@@ -92,8 +95,15 @@ public class Updater {
             System.out.println("Downloading update from: " + downloadUrl);
 
             // 1. Скачиваем DMG
-            HttpClient client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
-            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(downloadUrl)).GET().build();
+            HttpClient client = HttpClient.newBuilder()
+                    .version(HttpClient.Version.HTTP_1_1)
+                    .followRedirects(HttpClient.Redirect.NORMAL)
+                    .build();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(downloadUrl))
+                    .header("User-Agent", "KVN-Updater-App")
+                    .GET()
+                    .build();
             HttpResponse<Path> response = client.send(request, HttpResponse.BodyHandlers.ofFile(dmgPath));
 
             if (response.statusCode() == 200) {
