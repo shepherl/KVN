@@ -26,6 +26,7 @@ public class StatusBarMenu {
     public Menu dnsMenu;
     public Menu engineMenu;
     public Menu profilesMenu;
+    public MenuItem updateItem;
     public MenuItem portItem;
     public CheckboxMenuItem wireproxyItem;
     public CheckboxMenuItem operaItem;
@@ -85,6 +86,7 @@ public class StatusBarMenu {
         profilesMenu = new Menu("Profiles");
         refreshProfilesMenu();
 
+        updateItem = new MenuItem("Check for updates...");
         portItem = new MenuItem("Proxy Port: " + SettingsParser.getProxyPort());
         
         // Обновляем proxy.conf актуальным профилем при старте
@@ -409,6 +411,10 @@ public class StatusBarMenu {
             topFrame.dispose(); // Освобождаем ресурсы
         });
 
+        updateItem.addActionListener(e -> {
+            Updater.checkForUpdates();
+        });
+
         exitItem.addActionListener(e -> {
             int engine = SettingsParser.getProxyEngine();
             stopCurrentProxy(engine);
@@ -435,6 +441,7 @@ public class StatusBarMenu {
 
         menu.addSeparator();
         menu.add(portItem);
+        menu.add(updateItem);
         menu.add(exitItem);
     }
 
