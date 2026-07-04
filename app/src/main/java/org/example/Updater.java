@@ -222,6 +222,9 @@ public class Updater {
                     "done\n" +
                     "echo \"Process exited.\"\n" +
                     "\n" +
+                    "# Показываем системное уведомление macOS\n" +
+                    "osascript -e 'display notification \"Installing update... Please wait.\" with title \"KVN Updater\"'\n" +
+                    "\n" +
                     "# Снимаем карантин с DMG\n" +
                     "xattr -d com.apple.quarantine \"" + dmgPath + "\" 2>/dev/null\n" +
                     "\n" +
