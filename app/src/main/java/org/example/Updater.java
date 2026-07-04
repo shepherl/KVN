@@ -27,7 +27,7 @@ import javax.swing.SwingUtilities;
 public class Updater {
 
     private static final String GITHUB_REPO = "shepherl/kvnfaq"; 
-    public static final String CURRENT_VERSION = "1.0"; // Текущая версия
+    public static final String CURRENT_VERSION = "1.4"; // Текущая версия
 
     private static void showMessageBlocking(String message, String title, int messageType) {
         JFrame topFrame = new JFrame();
