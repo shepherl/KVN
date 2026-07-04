@@ -49,6 +49,10 @@ public class App {
 
         trayIcon.setPopupMenu(statusBarMenu.menu);
         try { tray.add(trayIcon); } catch (AWTException e) { e.printStackTrace(); }
+
+        // Автоматически проверяем наличие обновлений при старте
+        // Передаем true, чтобы не беспокоить пользователя попапами "Нет обновлений" или ошибками сети
+        Updater.checkForUpdates(true);
     }
 
 

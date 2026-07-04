@@ -40,10 +40,10 @@ public class Updater {
         return result;
     }
 
-    public static void checkForUpdates() {
+    public static void checkForUpdates(boolean silentIfUpToDate) {
         new Thread(() -> {
             try {
-                System.out.println("Checking for updates...");
+                System.out.println("Checking for updates (silentIfUpToDate=" + silentIfUpToDate + ")...");
                 HttpClient client = HttpClient.newBuilder()
                         .version(HttpClient.Version.HTTP_1_1) // Решает проблемы с TLS handshake
                         .build();
@@ -80,14 +80,20 @@ public class Updater {
                                 }
                             }
                         } else {
-                            showMessageBlocking("You are using the latest version (" + CURRENT_VERSION + ").", "Up to Date", JOptionPane.INFORMATION_MESSAGE);
+                            if (!silentIfUpToDate) {
+                                showMessageBlocking("You are using the latest version (" + CURRENT_VERSION + ").", "Up to Date", JOptionPane.INFORMATION_MESSAGE);
+                            }
                         }
                     }
                 } else {
-                    showMessageBlocking("Failed to check updates. HTTP Status: " + response.statusCode(), "Error", JOptionPane.ERROR_MESSAGE);
+                    if (!silentIfUpToDate) {
+                        showMessageBlocking("Failed to check updates. HTTP Status: " + response.statusCode(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             } catch (Exception e) {
-                showMessageBlocking("Update check failed: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                if (!silentIfUpToDate) {
+                    showMessageBlocking("Update check failed: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
         }).start();
     }

@@ -412,7 +412,7 @@ public class StatusBarMenu {
         });
 
         updateItem.addActionListener(e -> {
-            Updater.checkForUpdates();
+            Updater.checkForUpdates(false);
         });
 
         exitItem.addActionListener(e -> {
