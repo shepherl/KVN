@@ -18,6 +18,8 @@ import javax.swing.JOptionPane;
 import org.example.dns.Changedns;
 import org.example.dns.DnsProvider;
 
+import org.example.ota.Updater;
+
 public class StatusBarMenu {
     public PopupMenu menu = new PopupMenu();
     public MenuItem statusItem;
