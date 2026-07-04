@@ -74,7 +74,8 @@ struct UpdaterView: View {
             DispatchQueue.main.async { statusText = "Ожидание завершения программы..." }
             sleep(2)
             
-            let zipPath = "/tmp/KVN_update.zip"
+            let isZip = downloadUrl.lowercased().hasSuffix(".zip")
+            let downloadDest = isZip ? "/tmp/KVN_update.zip" : "/tmp/KVN_update.dmg"
             let extractDir = "/tmp/KVN_extracted"
             
             DispatchQueue.main.async { 
@@ -88,8 +89,8 @@ struct UpdaterView: View {
             guard let url = URL(string: downloadUrl) else { return }
             let task = URLSession.shared.downloadTask(with: url) { localURL, response, error in
                 if let localURL = localURL {
-                    try? FileManager.default.removeItem(atPath: zipPath)
-                    try? FileManager.default.moveItem(at: localURL, to: URL(fileURLWithPath: zipPath))
+                    try? FileManager.default.removeItem(atPath: downloadDest)
+                    try? FileManager.default.moveItem(at: localURL, to: URL(fileURLWithPath: downloadDest))
                 } else {
                     downloadError = true
                 }
@@ -118,24 +119,41 @@ struct UpdaterView: View {
                 isIndeterminate = true
             }
             
-            let bashScript = """
-            rm -rf "\(extractDir)"
-            mkdir -p "\(extractDir)"
-            unzip -q "\(zipPath)" -d "\(extractDir)"
-            
-            DMG_FILE=$(find "\(extractDir)" -name "*.dmg" | head -n 1)
-            if [ -z "$DMG_FILE" ]; then exit 1; fi
-            
-            hdiutil detach "/Volumes/KVN Installation" -force 2>/dev/null
-            hdiutil attach "$DMG_FILE" -nobrowse
-            
-            rm -rf "\(appPath)"
-            cp -R "/Volumes/KVN Installation/KVN.app" "\(appPath)"
-            xattr -dr com.apple.quarantine "\(appPath)" 2>/dev/null
-            
-            hdiutil detach "/Volumes/KVN Installation" -force 2>/dev/null
-            rm -rf "\(extractDir)" "\(zipPath)"
-            """
+            let bashScript: String
+            if isZip {
+                bashScript = """
+                rm -rf "\(extractDir)"
+                mkdir -p "\(extractDir)"
+                unzip -q "\(downloadDest)" -d "\(extractDir)"
+                
+                DMG_FILE=$(find "\(extractDir)" -name "*.dmg" | head -n 1)
+                if [ -z "$DMG_FILE" ]; then exit 1; fi
+                
+                hdiutil detach "/Volumes/KVN Installation" -force 2>/dev/null
+                hdiutil attach "$DMG_FILE" -nobrowse
+                if [ $? -ne 0 ]; then exit 1; fi
+                
+                rm -rf "\(appPath)"
+                cp -R "/Volumes/KVN Installation/KVN.app" "\(appPath)"
+                xattr -dr com.apple.quarantine "\(appPath)" 2>/dev/null
+                
+                hdiutil detach "/Volumes/KVN Installation" -force 2>/dev/null
+                rm -rf "\(extractDir)" "\(downloadDest)"
+                """
+            } else {
+                bashScript = """
+                hdiutil detach "/Volumes/KVN Installation" -force 2>/dev/null
+                hdiutil attach "\(downloadDest)" -nobrowse
+                if [ $? -ne 0 ]; then exit 1; fi
+                
+                rm -rf "\(appPath)"
+                cp -R "/Volumes/KVN Installation/KVN.app" "\(appPath)"
+                xattr -dr com.apple.quarantine "\(appPath)" 2>/dev/null
+                
+                hdiutil detach "/Volumes/KVN Installation" -force 2>/dev/null
+                rm -rf "\(downloadDest)"
+                """
+            }
             
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/bin/bash")
