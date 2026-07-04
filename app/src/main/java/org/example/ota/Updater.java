@@ -28,18 +28,52 @@ public class Updater {
     public static final String CURRENT_VERSION = "1.2"; 
 
     private static void showMessageBlocking(String message, String title, int messageType) {
-        JFrame topFrame = new JFrame();
-        topFrame.setAlwaysOnTop(true);
-        JOptionPane.showMessageDialog(topFrame, message, title, messageType);
-        topFrame.dispose();
+        try {
+            // Используем нативный AppleScript для идеального отображения в macOS (включая темную тему)
+            String script = String.format(
+                "display alert \"%s\" message \"%s\" buttons {\"OK\"} default button \"OK\"",
+                title.replace("\"", "\\\""),
+                message.replace("\n", "\\r").replace("\"", "\\\"")
+            );
+            Process process = new ProcessBuilder("osascript", "-e", script).start();
+            process.waitFor();
+        } catch (Exception e) {
+            // Фолбэк на старое Java-окно, если AppleScript почему-то не сработал
+            JFrame topFrame = new JFrame();
+            topFrame.setAlwaysOnTop(true);
+            JOptionPane.showMessageDialog(topFrame, message, title, messageType);
+            topFrame.dispose();
+        }
     }
 
     private static int showConfirmBlocking(String message, String title) {
-        JFrame topFrame = new JFrame();
-        topFrame.setAlwaysOnTop(true);
-        int result = JOptionPane.showConfirmDialog(topFrame, message, title, JOptionPane.YES_NO_OPTION);
-        topFrame.dispose();
-        return result;
+        try {
+            // Нативное окно macOS с поддержкой темной темы
+            String script = String.format(
+                "display alert \"%s\" message \"%s\" buttons {\"Нет\", \"Да\"} default button \"Да\"",
+                title.replace("\"", "\\\""),
+                message.replace("\n", "\\r").replace("\"", "\\\"")
+            );
+            Process process = new ProcessBuilder("osascript", "-e", script).start();
+            process.waitFor();
+            
+            // Читаем ответ от AppleScript
+            try (java.util.Scanner s = new java.util.Scanner(process.getInputStream()).useDelimiter("\\A")) {
+                String result = s.hasNext() ? s.next() : "";
+                if (result.contains("Да")) {
+                    return JOptionPane.YES_OPTION;
+                } else {
+                    return JOptionPane.NO_OPTION;
+                }
+            }
+        } catch (Exception e) {
+            // Фолбэк на старое Java-окно
+            JFrame topFrame = new JFrame();
+            topFrame.setAlwaysOnTop(true);
+            int result = JOptionPane.showConfirmDialog(topFrame, message, title, JOptionPane.YES_NO_OPTION);
+            topFrame.dispose();
+            return result;
+        }
     }
 
     public static void checkForUpdates(boolean silentIfUpToDate) {
