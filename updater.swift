@@ -22,6 +22,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         NSWindow.allowsAutomaticWindowTabbing = false
+        
+        // Гарантированно делаем окно поверх всех с небольшой задержкой (чтобы SwiftUI успел его создать)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            for window in NSApp.windows {
+                window.level = .floating
+                window.center()
+            }
+        }
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return true
@@ -63,12 +71,6 @@ struct UpdaterView: View {
         }
         .padding()
         .onAppear {
-            // Надежно делаем окно поверх всех после его появления
-            if let window = NSApp.windows.first {
-                window.level = .floating
-                window.center()
-            }
-            
             if args.count < 3 {
                 statusText = "Ошибка: не переданы аргументы"
                 return
@@ -150,10 +152,14 @@ struct UpdaterView: View {
                 
                 rm -rf "\(appPath)"
                 cp -R "/Volumes/KVN Installation/KVN.app" "\(appPath)"
+                CP_STATUS=$?
                 xattr -dr com.apple.quarantine "\(appPath)" 2>/dev/null
                 
                 hdiutil detach "/Volumes/KVN Installation" -force 2>/dev/null
                 rm -rf "\(extractDir)" "\(downloadDest)"
+                
+                if [ $CP_STATUS -ne 0 ]; then exit 1; fi
+                exit 0
                 """
             } else {
                 bashScript = """
@@ -163,15 +169,19 @@ struct UpdaterView: View {
                 
                 rm -rf "\(appPath)"
                 cp -R "/Volumes/KVN Installation/KVN.app" "\(appPath)"
+                CP_STATUS=$?
                 xattr -dr com.apple.quarantine "\(appPath)" 2>/dev/null
                 
                 hdiutil detach "/Volumes/KVN Installation" -force 2>/dev/null
                 rm -rf "\(downloadDest)"
+                
+                if [ $CP_STATUS -ne 0 ]; then exit 1; fi
+                exit 0
                 """
             }
             
-            // Чтобы понять, почему падает копирование, записываем весь лог в файл
-            let bashScriptWithLog = bashScript + " > /tmp/kvn_updater_log.txt 2>&1"
+            // Чтобы понять, почему падает копирование, записываем весь лог (set -x показывает каждую команду)
+            let bashScriptWithLog = "(set -x; \(bashScript)) > /tmp/kvn_updater_log.txt 2>&1"
             
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/bin/bash")
