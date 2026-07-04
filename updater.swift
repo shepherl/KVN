@@ -22,11 +22,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         NSWindow.allowsAutomaticWindowTabbing = false
-        
-        for window in NSApp.windows {
-            window.level = .floating
-            window.center()
-        }
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return true
@@ -68,6 +63,12 @@ struct UpdaterView: View {
         }
         .padding()
         .onAppear {
+            // Надежно делаем окно поверх всех после его появления
+            if let window = NSApp.windows.first {
+                window.level = .floating
+                window.center()
+            }
+            
             if args.count < 3 {
                 statusText = "Ошибка: не переданы аргументы"
                 return
@@ -169,9 +170,12 @@ struct UpdaterView: View {
                 """
             }
             
+            // Чтобы понять, почему падает копирование, записываем весь лог в файл
+            let bashScriptWithLog = bashScript + " > /tmp/kvn_updater_log.txt 2>&1"
+            
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/bin/bash")
-            process.arguments = ["-c", bashScript]
+            process.arguments = ["-c", bashScriptWithLog]
             try? process.run()
             process.waitUntilExit()
             
@@ -180,7 +184,7 @@ struct UpdaterView: View {
                     showSuccess = true
                 }
             } else {
-                DispatchQueue.main.async { statusText = "Ошибка при установке!" }
+                DispatchQueue.main.async { statusText = "Ошибка при установке! (см. лог)" }
             }
         }
     }
