@@ -19,6 +19,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
 import javax.swing.JFrame;
+import javax.swing.JDialog;
+import javax.swing.JProgressBar;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import javax.swing.SwingUtilities;
 
 public class Updater {
 
@@ -38,6 +44,34 @@ public class Updater {
         int result = JOptionPane.showConfirmDialog(topFrame, message, title, JOptionPane.YES_NO_OPTION);
         topFrame.dispose();
         return result;
+    }
+
+    private static JDialog showProgressDialog(String message) {
+        JDialog[] dialogArray = new JDialog[1];
+        try {
+            SwingUtilities.invokeAndWait(() -> {
+                JDialog dialog = new JDialog((JFrame)null, "KVN Updater", false);
+                dialog.setAlwaysOnTop(true);
+                dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+                dialog.setSize(300, 100);
+                dialog.setLocationRelativeTo(null);
+                
+                JPanel panel = new JPanel(new BorderLayout(10, 10));
+                panel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
+                
+                JLabel label = new JLabel(message, javax.swing.SwingConstants.CENTER);
+                JProgressBar progressBar = new JProgressBar();
+                progressBar.setIndeterminate(true);
+                
+                panel.add(label, BorderLayout.NORTH);
+                panel.add(progressBar, BorderLayout.CENTER);
+                
+                dialog.add(panel);
+                dialog.setVisible(true);
+                dialogArray[0] = dialog;
+            });
+        } catch (Exception e) {}
+        return dialogArray[0];
     }
 
     public static void checkForUpdates(boolean silentIfUpToDate) {
@@ -74,7 +108,8 @@ public class Updater {
                                 
                                 if (assetMatcher.find()) {
                                     String downloadUrl = assetMatcher.group(1);
-                                    downloadAndInstall(downloadUrl);
+                                    JDialog progressDialog = showProgressDialog("Downloading and installing update...");
+                                    downloadAndInstall(downloadUrl, progressDialog);
                                 } else {
                                     showMessageBlocking("Could not find any asset in the latest release.", "Error", JOptionPane.ERROR_MESSAGE);
                                 }
@@ -98,7 +133,7 @@ public class Updater {
         }).start();
     }
 
-    private static void downloadAndInstall(String downloadUrl) {
+    private static void downloadAndInstall(String downloadUrl, JDialog progressDialog) {
         try {
             Path downloadPath = Paths.get("/tmp/KVN_update_asset");
             boolean isZip = downloadUrl.endsWith(".zip");
@@ -124,6 +159,7 @@ public class Updater {
             HttpResponse<Path> response = client.send(request, HttpResponse.BodyHandlers.ofFile(downloadPath));
 
             if (response.statusCode() != 200) {
+                if (progressDialog != null) progressDialog.dispose();
                 showMessageBlocking("Failed to download update. HTTP Status: " + response.statusCode(), "Download Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -150,6 +186,7 @@ public class Updater {
                         .orElse(null);
 
                 if (dmgPath == null) {
+                    if (progressDialog != null) progressDialog.dispose();
                     showMessageBlocking("Could not find DMG file inside the downloaded archive.", "Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
@@ -160,6 +197,7 @@ public class Updater {
             // 3. Определяем путь к текущему приложению (ищем .app)
             String appPath = getAppPath();
             if (appPath == null) {
+                if (progressDialog != null) progressDialog.dispose();
                 showMessageBlocking("Could not determine .app path. Aborting update.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -224,6 +262,9 @@ public class Updater {
                     "hdiutil detach \"/Volumes/" + volumeName + "\" -force 2>/dev/null\n" +
                     "rm -rf /tmp/KVN_update.zip /tmp/KVN_update.dmg /tmp/KVN_update_extracted\n" +
                     "\n" +
+                    "# Создаем флаг успешного обновления\n" +
+                    "touch /tmp/kvn_updated\n" +
+                    "\n" +
                     "# Запускаем новое приложение\n" +
                     "echo \"Launching updated app...\"\n" +
                     "open \"" + appPath + "\"\n" +
@@ -239,13 +280,11 @@ public class Updater {
             perms.add(PosixFilePermission.OWNER_EXECUTE);
             Files.setPosixFilePermissions(scriptPath, perms);
 
-            // Предупреждаем пользователя и ждем нажатия OK
-            showMessageBlocking("Update downloaded successfully.\nThe application will now restart to install the update.", "Update Ready", JOptionPane.INFORMATION_MESSAGE);
-
-            // 5. Запускаем скрипт и выходим
+            // 5. Запускаем скрипт и выходим (прогресс-бар закроется вместе с приложением)
             new ProcessBuilder(scriptPath.toString()).start();
             System.exit(0);
         } catch (Exception e) {
+            if (progressDialog != null) progressDialog.dispose();
             showMessageBlocking("Failed to download or install update: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }

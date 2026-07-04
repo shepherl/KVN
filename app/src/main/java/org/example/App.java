@@ -21,8 +21,23 @@ public class App {
 
 
         FileCheck fileCheck = new FileCheck(pathBase,configPath);
-
         fileCheck.startStart();
+
+        // Проверяем, было ли только что установлено обновление
+        if (Files.exists(Path.of("/tmp/kvn_updated"))) {
+            try {
+                Files.delete(Path.of("/tmp/kvn_updated"));
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    javax.swing.JFrame topFrame = new javax.swing.JFrame();
+                    topFrame.setAlwaysOnTop(true);
+                    javax.swing.JOptionPane.showMessageDialog(topFrame, 
+                        "Update successfully installed! You are now running version " + Updater.CURRENT_VERSION, 
+                        "Update Successful", 
+                        javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                    topFrame.dispose();
+                });
+            } catch (Exception ignored) {}
+        }
 
         System.setProperty("apple.awt.UIElement", "true");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
