@@ -58,11 +58,19 @@ public class Updater {
                 panel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
                 
                 JLabel label = new JLabel(message, javax.swing.SwingConstants.CENTER);
-                JProgressBar progressBar = new JProgressBar();
-                progressBar.setIndeterminate(true);
+                
+                java.net.URL spinnerUrl = Updater.class.getResource("/spinner.gif");
+                if (spinnerUrl != null) {
+                    JLabel spinnerLabel = new JLabel(new javax.swing.ImageIcon(spinnerUrl));
+                    spinnerLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+                    panel.add(spinnerLabel, BorderLayout.CENTER);
+                } else {
+                    JProgressBar progressBar = new JProgressBar();
+                    progressBar.setIndeterminate(true);
+                    panel.add(progressBar, BorderLayout.CENTER);
+                }
                 
                 panel.add(label, BorderLayout.NORTH);
-                panel.add(progressBar, BorderLayout.CENTER);
                 
                 dialog.add(panel);
                 dialog.setVisible(true);
