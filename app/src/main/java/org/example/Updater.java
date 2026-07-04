@@ -1,7 +1,5 @@
 package org.example;
 
-// Привет разраб
-
 import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
