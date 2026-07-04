@@ -20,15 +20,28 @@ struct UpdaterApp: App {
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
+        
+        // Крадем иконку у самого KVN и ставим её нашему апдейтеру в Dock!
+        let args = CommandLine.arguments
+        if args.count > 2 {
+            let icon = NSWorkspace.shared.icon(forFile: args[2])
+            NSApp.applicationIconImage = icon
+        }
+        
         NSApp.activate(ignoringOtherApps: true)
         NSWindow.allowsAutomaticWindowTabbing = false
         
         // Гарантированно делаем окно поверх всех с небольшой задержкой (чтобы SwiftUI успел его создать)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             for window in NSApp.windows {
-                window.level = .floating
+                // Делаем уровень окна максимальным (как у скринсейвера или меню-бара)
+                window.level = NSWindow.Level.screenSaver
+                // Принудительно выводим окно на передний план
+                window.makeKeyAndOrderFront(nil)
                 window.center()
             }
+            // Ещё раз запрашиваем фокус у macOS
+            NSApp.activate(ignoringOtherApps: true)
         }
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -192,6 +205,11 @@ struct UpdaterView: View {
             if process.terminationStatus == 0 {
                 DispatchQueue.main.async {
                     showSuccess = true
+                    
+                    // Автозапуск через 1.5 секунды (пользователь успеет увидеть зеленую галочку)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        launchAppAndExit()
+                    }
                 }
             } else {
                 DispatchQueue.main.async { statusText = "Ошибка при установке! (см. лог)" }
