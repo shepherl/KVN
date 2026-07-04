@@ -25,7 +25,7 @@ import javax.swing.JFrame;
 public class Updater {
 
     private static final String GITHUB_REPO = "shepherl/kvnfaq"; 
-    public static final String CURRENT_VERSION = "1.6"; 
+    public static final String CURRENT_VERSION = "1.2"; 
 
     private static void showMessageBlocking(String message, String title, int messageType) {
         JFrame topFrame = new JFrame();
@@ -123,8 +123,13 @@ public class Updater {
             perms.add(PosixFilePermission.OWNER_EXECUTE);
             Files.setPosixFilePermissions(updaterTempPath, perms);
 
-            // Запускаем апдейтер, передавая ему URL для скачивания и путь к приложению
-            new ProcessBuilder(updaterTempPath.toString(), downloadUrl, appPath).start();
+            // Запускаем апдейтер, передавая ему URL, путь к приложению и PID текущего процесса
+            new ProcessBuilder(
+                updaterTempPath.toString(), 
+                downloadUrl, 
+                appPath, 
+                String.valueOf(ProcessHandle.current().pid())
+            ).start();
             
             // Моментально завершаем Java-программу
             System.exit(0);

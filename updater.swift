@@ -9,8 +9,11 @@ struct UpdaterApp: App {
     var body: some Scene {
         WindowGroup {
             UpdaterView()
+                .frame(width: 350, height: 200)
+                .fixedSize()
         }
         .windowStyle(HiddenTitleBarWindowStyle())
+        .windowResizability(.contentSize)
     }
 }
 
@@ -19,6 +22,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         NSWindow.allowsAutomaticWindowTabbing = false
+        
+        for window in NSApp.windows {
+            window.level = .floating
+            window.center()
+        }
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return true
@@ -59,7 +67,6 @@ struct UpdaterView: View {
             }
         }
         .padding()
-        .frame(width: 350, height: 200)
         .onAppear {
             if args.count < 3 {
                 statusText = "Ошибка: не переданы аргументы"
@@ -72,7 +79,14 @@ struct UpdaterView: View {
     func performUpdate(downloadUrl: String, appPath: String) {
         DispatchQueue.global(qos: .userInitiated).async {
             DispatchQueue.main.async { statusText = "Ожидание завершения программы..." }
-            sleep(2)
+            
+            if args.count > 3, let pid = Int32(args[3]) {
+                while kill(pid, 0) == 0 {
+                    sleep(1)
+                }
+            } else {
+                sleep(3)
+            }
             
             let isZip = downloadUrl.lowercased().hasSuffix(".zip")
             let downloadDest = isZip ? "/tmp/KVN_update.zip" : "/tmp/KVN_update.dmg"
@@ -98,8 +112,8 @@ struct UpdaterView: View {
             }
             
             var observation: NSKeyValueObservation?
-            observation = task.observe(\.progress.fractionCompleted) { t, _ in
-                DispatchQueue.main.async { self.progress = t.progress.fractionCompleted }
+            observation = task.progress.observe(\.fractionCompleted) { progressObj, _ in
+                DispatchQueue.main.async { self.progress = progressObj.fractionCompleted }
             }
             
             task.resume()
