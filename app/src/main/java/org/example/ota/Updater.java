@@ -36,7 +36,7 @@ import javax.swing.SwingUtilities;
 public class Updater {
 
     private static final String GITHUB_REPO = "shepherl/kvnfaq"; 
-    public static final String CURRENT_VERSION = "1.8"; 
+    public static final String CURRENT_VERSION = "1.4"; 
 
     private static String getIconPathForScript() {
         String appPath = getAppPath();
@@ -200,6 +200,11 @@ public class Updater {
         dialog.setLocationRelativeTo(null);
         dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         
+        // Красим саму "болванку" окна в тёмный цвет до её отрисовки, чтобы не было белого моргания
+        Color darkBg = new Color(35, 35, 35);
+        dialog.getContentPane().setBackground(darkBg);
+        dialog.setBackground(darkBg);
+        
         // Скругленные углы
         try {
             dialog.setShape(new java.awt.geom.RoundRectangle2D.Double(0, 0, 400, 110, 20, 20));
@@ -207,7 +212,7 @@ public class Updater {
         
         JPanel panel = new JPanel(new BorderLayout(15, 15));
         panel.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
-        panel.setBackground(new Color(35, 35, 35));
+        panel.setBackground(darkBg);
         
         JLabel label = new JLabel("Скачивание обновления KVN...");
         label.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 15));
