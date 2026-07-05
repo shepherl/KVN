@@ -258,11 +258,16 @@ public class Updater {
                             SwingUtilities.invokeLater(() -> pb.setValue(percent));
                         }
                     }
+                    
+                    // Строгая проверка целостности скачанного файла!
+                    if (fileSize > 0 && totalRead != fileSize) {
+                        throw new java.io.IOException("Файл скачан не полностью! Ожидалось: " + fileSize + " байт, скачано: " + totalRead + " байт. Проверьте стабильность интернет-соединения.");
+                    }
                 }
                 
                 SwingUtilities.invokeLater(() -> {
                     label.setText("Перезапуск...");
-                    pb.setIndeterminate(true);
+                    pb.setVisible(false); // Полностью скрываем полоску
                 });
                 
                 // Создаем невидимый bash-скрипт для установки
