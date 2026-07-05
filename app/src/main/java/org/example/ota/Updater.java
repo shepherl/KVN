@@ -38,17 +38,6 @@ public class Updater {
     private static final String GITHUB_REPO = "shepherl/kvnfaq"; 
     public static final String CURRENT_VERSION = "1.2"; 
 
-    private static String getIconPathForScript() {
-        String appPath = getAppPath();
-        if (appPath != null) {
-            String path = appPath + "/Contents/Resources/kvn_logo_dock.icns";
-            if (java.nio.file.Files.exists(java.nio.file.Paths.get(path))) {
-                return path;
-            }
-        }
-        return null;
-    }
-
     private static String runAppleScript(String script) throws Exception {
         Process process = new ProcessBuilder("osascript", "-").start();
         process.getOutputStream().write(script.getBytes("UTF-8"));
@@ -69,15 +58,9 @@ public class Updater {
 
     private static void showMessageBlocking(String message, String title, int messageType) {
         try {
-            String iconPath = getIconPathForScript();
             StringBuilder sb = new StringBuilder();
-            sb.append("activate\n"); // Обязательно выводим на передний план
-            sb.append("display dialog \"").append(message).append("\"");
-            sb.append(" with title \"").append(title).append("\"");
-            sb.append(" buttons {\"OK\"} default button \"OK\"");
-            if (iconPath != null) {
-                sb.append(" with icon POSIX file \"").append(iconPath).append("\"");
-            }
+            sb.append("activate\n"); 
+            sb.append("display alert \"").append(title).append("\" message \"").append(message).append("\" buttons {\"OK\"} default button \"OK\"");
             runAppleScript(sb.toString());
         } catch (Exception e) {
             System.err.println("AppleScript failed, falling back to Java: " + e.getMessage());
@@ -90,15 +73,11 @@ public class Updater {
 
     private static int showConfirmBlocking(String message, String title) {
         try {
-            String iconPath = getIconPathForScript();
             StringBuilder sb = new StringBuilder();
-            sb.append("activate\n"); // Обязательно выводим на передний план
-            sb.append("display dialog \"").append(message).append("\"");
-            sb.append(" with title \"").append(title).append("\"");
-            sb.append(" buttons {\"Нет\", \"Да\"} default button \"Да\"");
-            if (iconPath != null) {
-                sb.append(" with icon POSIX file \"").append(iconPath).append("\"");
-            }
+            sb.append("activate\n");
+            // Возвращаемся к display alert для красивого окна
+            sb.append("display alert \"").append(title).append("\" message \"").append(message).append("\" buttons {\"Нет\", \"Да\"} default button \"Да\"");
+            
             String result = runAppleScript(sb.toString());
             if (result.contains("Да")) {
                 return JOptionPane.YES_OPTION;
@@ -153,7 +132,7 @@ public class Updater {
                                     String downloadUrl = assetMatcher.group(1);
                                     downloadAndInstallInvisible(downloadUrl);
                                 } else {
-                                    showMessageBlocking("Could not find any asset in the latest release.", "Error", JOptionPane.ERROR_MESSAGE);
+                                    showMessageBlocking("Не удалось найти файл в релизе.", "Ошибка", JOptionPane.ERROR_MESSAGE);
                                 }
                             }
                         } else {
@@ -164,12 +143,12 @@ public class Updater {
                     }
                 } else {
                     if (!silentIfUpToDate) {
-                        showMessageBlocking("Failed to check updates. HTTP Status: " + response.statusCode(), "Error", JOptionPane.ERROR_MESSAGE);
+                        showMessageBlocking("Не удалось проверить обновления. Статус: " + response.statusCode(), "Ошибка", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             } catch (Exception e) {
                 if (!silentIfUpToDate) {
-                    showMessageBlocking("Update check failed: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    showMessageBlocking("Ошибка при проверке обновлений: " + e.getMessage(), "Ошибка", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }).start();
@@ -178,29 +157,42 @@ public class Updater {
     private static void downloadAndInstallInvisible(String downloadUrl) {
         String appPath = getAppPath();
         if (appPath == null) {
-            showMessageBlocking("Could not determine .app path. Aborting update.", "Error", JOptionPane.ERROR_MESSAGE);
+            showMessageBlocking("Не удалось определить путь к приложению.", "Ошибка", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        // Показываем простенькое тёмное окно загрузки от текущего Java-процесса
         JDialog dialog = new JDialog();
         dialog.setAlwaysOnTop(true);
-        dialog.setUndecorated(true); // Убираем рамки для красоты
-        dialog.setSize(300, 70);
+        dialog.setUndecorated(true);
+        dialog.setSize(400, 110);
         dialog.setLocationRelativeTo(null);
         dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-        panel.setBackground(new Color(45, 45, 45)); // Тёмно-серый фон
+        // Скругленные углы
+        try {
+            dialog.setShape(new java.awt.geom.RoundRectangle2D.Double(0, 0, 400, 110, 20, 20));
+        } catch (Exception ignored) {}
         
-        JLabel label = new JLabel("Скачивание обновления...");
-        label.setForeground(Color.WHITE);
+        JPanel panel = new JPanel(new BorderLayout(15, 15));
+        panel.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
+        panel.setBackground(new Color(35, 35, 35));
+        
+        JLabel label = new JLabel("Скачивание обновления KVN...");
+        label.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 15));
+        label.setForeground(new Color(230, 230, 230));
         label.setHorizontalAlignment(JLabel.CENTER);
         panel.add(label, BorderLayout.NORTH);
         
         JProgressBar pb = new JProgressBar(0, 100);
         pb.setStringPainted(true);
+        pb.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 12));
+        pb.setUI(new javax.swing.plaf.basic.BasicProgressBarUI() {
+            protected Color getSelectionBackground() { return Color.WHITE; }
+            protected Color getSelectionForeground() { return Color.WHITE; }
+        });
+        pb.setForeground(new Color(10, 132, 255)); // macOS Blue
+        pb.setBackground(new Color(60, 60, 60));
+        pb.setBorderPainted(false);
         panel.add(pb, BorderLayout.CENTER);
         
         dialog.add(panel);
