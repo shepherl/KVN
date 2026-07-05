@@ -45,6 +45,30 @@ class UpdaterState: ObservableObject {
     
     let args = CommandLine.arguments
     
+    /// Единственный надёжный способ вывести окно поверх всех на современных macOS:
+    /// просим систему саму активировать наш процесс через AppleScript.
+    func bringToFront() {
+        // 1. Устанавливаем уровень окна выше всех
+        for window in NSApp.windows {
+            window.level = .screenSaver
+            window.makeKeyAndOrderFront(nil)
+            window.center()
+            window.orderFrontRegardless()
+        }
+        
+        // 2. Пробуем стандартный API
+        NSApp.activate(ignoringOtherApps: true)
+        
+        // 3. Главный козырь: через AppleScript просим macOS активировать процесс по PID.
+        //    Это обходит ограничения macOS Ventura+ для дочерних процессов.
+        let pid = ProcessInfo.processInfo.processIdentifier
+        let script = "tell application \"System Events\" to set frontmost of (every process whose unix id is \(pid)) to true"
+        let appleScript = Process()
+        appleScript.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        appleScript.arguments = ["-e", script]
+        try? appleScript.run()
+    }
+    
     func start() {
         if args.count < 3 {
             DispatchQueue.main.async { self.statusText = "Ошибка: не переданы аргументы" }
@@ -63,15 +87,9 @@ class UpdaterState: ObservableObject {
                 sleep(3)
             }
             
-            // Важно: мы делаем окно активным ТОЛЬКО после того, как Java умерла. 
-            // Иначе macOS отберет фокус при смерти Java-процесса.
+            // Активируем окно ПОСЛЕ смерти Java
             DispatchQueue.main.async {
-                NSApp.activate(ignoringOtherApps: true)
-                for window in NSApp.windows {
-                    window.level = .screenSaver
-                    window.makeKeyAndOrderFront(nil)
-                    window.center()
-                }
+                self.bringToFront()
             }
             
             let isZip = downloadUrl.lowercased().hasSuffix(".zip")
@@ -174,12 +192,8 @@ class UpdaterState: ObservableObject {
             if process.terminationStatus == 0 {
                 DispatchQueue.main.async {
                     self.showSuccess = true
-                    // Если пользователь за время установки переключился на другое окно — 
-                    // принудительно возвращаем наше окно апдейтера на самый передний план!
-                    NSApp.activate(ignoringOtherApps: true)
-                    for window in NSApp.windows {
-                        window.makeKeyAndOrderFront(nil)
-                    }
+                    // Снова выводим окно на передний план после завершения установки
+                    self.bringToFront()
                 }
             } else {
                 DispatchQueue.main.async { self.statusText = "Ошибка при установке! (см. лог)" }
