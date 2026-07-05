@@ -19,8 +19,10 @@ struct UpdaterApp: App {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Регистрируемся как обычное приложение с иконкой в Dock
         NSApp.setActivationPolicy(.regular)
         
+        // Берём иконку у KVN.app
         let args = CommandLine.arguments
         if args.count > 2 {
             let icon = NSWorkspace.shared.icon(forFile: args[2])
@@ -28,8 +30,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         
         NSWindow.allowsAutomaticWindowTabbing = false
+        
+        // Запускаем рабочий процесс сразу
         UpdaterState.shared.start()
     }
+    
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return true
     }
@@ -39,61 +44,61 @@ class UpdaterState: ObservableObject {
     static let shared = UpdaterState()
     
     @Published var statusText = "Ожидание закрытия KVN..."
-    @Published var showSuccess = false
     @Published var progress: Double = 0.0
     @Published var isIndeterminate = true
+    @Published var isDone = false
+    @Published var isError = false
     
     let args = CommandLine.arguments
     
-    /// Выводит окно на передний план. Теперь это работает надёжно,
-    /// потому что процесс запущен как полноценный .app через `open`.
-    func bringToFront() {
+    func activateWindow() {
         NSApp.activate(ignoringOtherApps: true)
         for window in NSApp.windows {
             window.level = .floating
-            window.makeKeyAndOrderFront(nil)
-            window.center()
             window.orderFrontRegardless()
+            window.center()
         }
     }
     
     func start() {
         if args.count < 3 {
-            DispatchQueue.main.async { self.statusText = "Ошибка: не переданы аргументы" }
+            DispatchQueue.main.async {
+                self.statusText = "Ошибка: не переданы аргументы"
+                self.isError = true
+            }
             return
         }
         let downloadUrl = args[1]
         let appPath = args[2]
         
         DispatchQueue.global(qos: .userInitiated).async {
-            // Ждем завершения Java процесса по переданному PID
+            // Ждём завершения Java-процесса по PID
             if self.args.count > 3, let pid = Int32(self.args[3]) {
                 while kill(pid, 0) == 0 {
-                    sleep(1)
+                    usleep(500_000) // 0.5 сек
                 }
             } else {
                 sleep(3)
             }
             
-            // Активируем окно ПОСЛЕ смерти Java
-            DispatchQueue.main.async {
-                self.bringToFront()
-            }
+            // Java умерла — теперь активируем окно
+            DispatchQueue.main.async { self.activateWindow() }
             
+            // --- Скачивание ---
             let isZip = downloadUrl.lowercased().hasSuffix(".zip")
             let downloadDest = isZip ? "/tmp/KVN_update.zip" : "/tmp/KVN_update.dmg"
             let extractDir = "/tmp/KVN_extracted"
             
-            DispatchQueue.main.async { 
+            DispatchQueue.main.async {
                 self.statusText = "Загрузка обновления..."
-                self.isIndeterminate = false 
+                self.isIndeterminate = false
             }
             
             let semaphore = DispatchSemaphore(value: 0)
             var downloadError = false
             
             guard let url = URL(string: downloadUrl) else { return }
-            let task = URLSession.shared.downloadTask(with: url) { localURL, response, error in
+            let task = URLSession.shared.downloadTask(with: url) { localURL, _, error in
                 if let localURL = localURL {
                     try? FileManager.default.removeItem(atPath: downloadDest)
                     try? FileManager.default.moveItem(at: localURL, to: URL(fileURLWithPath: downloadDest))
@@ -104,8 +109,8 @@ class UpdaterState: ObservableObject {
             }
             
             var observation: NSKeyValueObservation?
-            observation = task.progress.observe(\.fractionCompleted) { progressObj, _ in
-                DispatchQueue.main.async { self.progress = progressObj.fractionCompleted }
+            observation = task.progress.observe(\.fractionCompleted) { p, _ in
+                DispatchQueue.main.async { self.progress = p.fractionCompleted }
             }
             
             task.resume()
@@ -113,13 +118,14 @@ class UpdaterState: ObservableObject {
             observation?.invalidate()
             
             if downloadError {
-                DispatchQueue.main.async { 
-                    self.statusText = "Ошибка скачивания сети!"
-                    self.isIndeterminate = true
+                DispatchQueue.main.async {
+                    self.statusText = "Ошибка загрузки!"
+                    self.isError = true
                 }
                 return
             }
             
+            // --- Установка ---
             DispatchQueue.main.async {
                 self.statusText = "Установка обновления..."
                 self.isIndeterminate = true
@@ -171,21 +177,40 @@ class UpdaterState: ObservableObject {
             
             let bashScriptWithLog = "(set -x; \(bashScript)) > /tmp/kvn_updater_log.txt 2>&1"
             
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/bin/bash")
-            process.arguments = ["-c", bashScriptWithLog]
-            try? process.run()
-            process.waitUntilExit()
+            let proc = Process()
+            proc.executableURL = URL(fileURLWithPath: "/bin/bash")
+            proc.arguments = ["-c", bashScriptWithLog]
+            try? proc.run()
+            proc.waitUntilExit()
             
-            if process.terminationStatus == 0 {
+            if proc.terminationStatus == 0 {
                 DispatchQueue.main.async {
-                    self.showSuccess = true
-                    // Снова выводим окно на передний план после завершения установки
-                    self.bringToFront()
+                    self.statusText = "Успешно! Запуск KVN..."
+                    self.isDone = true
+                    self.activateWindow()
+                    
+                    // Автозапуск через 1 секунду
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        self.launchAppAndExit()
+                    }
                 }
             } else {
-                DispatchQueue.main.async { self.statusText = "Ошибка при установке! (см. лог)" }
+                DispatchQueue.main.async {
+                    self.statusText = "Ошибка при установке!"
+                    self.isError = true
+                    self.activateWindow()
+                }
             }
+        }
+    }
+    
+    func launchAppAndExit() {
+        let proc = Process()
+        proc.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        proc.arguments = [args[2]]
+        try? proc.run()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            NSApplication.shared.terminate(nil)
         }
     }
 }
@@ -194,18 +219,22 @@ struct UpdaterView: View {
     @ObservedObject var state = UpdaterState.shared
     
     var body: some View {
-        VStack(spacing: 20) {
-            if state.showSuccess {
-                Image(nsImage: NSImage(named: NSImage.Name("NSMenuOnStateTemplate")) ?? NSImage())
+        VStack(spacing: 16) {
+            if state.isDone {
+                Image(systemName: "checkmark.circle.fill")
                     .resizable()
                     .frame(width: 40, height: 40)
                     .foregroundColor(.green)
-                Text("Успешно обновлено!")
+                Text(state.statusText)
                     .font(.headline)
-                Button("ОК") {
-                    launchAppAndExit()
-                }
-                .keyboardShortcut(.defaultAction)
+            } else if state.isError {
+                Image(systemName: "xmark.circle.fill")
+                    .resizable()
+                    .frame(width: 40, height: 40)
+                    .foregroundColor(.red)
+                Text(state.statusText)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.red)
             } else {
                 if state.isIndeterminate {
                     ProgressView()
@@ -219,13 +248,5 @@ struct UpdaterView: View {
             }
         }
         .padding()
-    }
-    
-    func launchAppAndExit() {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        process.arguments = [state.args[2]]
-        try? process.run()
-        NSApplication.shared.terminate(nil)
     }
 }
