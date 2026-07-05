@@ -74,7 +74,10 @@ public class Updater {
             StringBuilder sb = new StringBuilder();
             sb.append("activate\n"); 
             
-            sb.append("display dialog \"").append(message).append("\" with title \"").append(title)
+            String safeMessage = message.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
+            String safeTitle = title.replace("\\", "\\\\").replace("\"", "\\\"");
+            
+            sb.append("display dialog \"").append(safeMessage).append("\" with title \"").append(safeTitle)
               .append("\" buttons {\"OK\"} default button \"OK\"");
               
             if (iconPath != null) {
@@ -101,7 +104,10 @@ public class Updater {
             StringBuilder sb = new StringBuilder();
             sb.append("activate\n");
             
-            sb.append("display dialog \"").append(message).append("\" with title \"").append(title)
+            String safeMessage = message.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
+            String safeTitle = title.replace("\\", "\\\\").replace("\"", "\\\"");
+            
+            sb.append("display dialog \"").append(safeMessage).append("\" with title \"").append(safeTitle)
               .append("\" buttons {\"Нет\", \"Да\"} default button \"Да\"");
               
             if (iconPath != null) {
@@ -156,7 +162,25 @@ public class Updater {
                         String latestVersion = versionMatcher.group(1);
                         
                         if (!CURRENT_VERSION.equals(latestVersion)) {
-                            int choice = showConfirmBlocking("Найдена новая версия: " + latestVersion + "\nСкачать и установить обновление?", "Доступно обновление");
+                            // Вытаскиваем описание релиза (Release Notes)
+                            String releaseNotes = "";
+                            Matcher bodyMatcher = Pattern.compile("\"body\"\\s*:\\s*(\"(?:[^\"\\\\]|\\\\.)*\")").matcher(json);
+                            if (bodyMatcher.find()) {
+                                String rawBody = bodyMatcher.group(1);
+                                rawBody = rawBody.substring(1, rawBody.length() - 1);
+                                releaseNotes = rawBody.replace("\\n", "\n").replace("\\r", "").replace("\\\"", "\"").replace("\\\\", "\\");
+                                if (releaseNotes.length() > 400) {
+                                    releaseNotes = releaseNotes.substring(0, 397) + "..."; // Защита от слишком длинных простыней
+                                }
+                            }
+                            
+                            String message = "Найдена новая версия: " + latestVersion;
+                            if (!releaseNotes.isEmpty()) {
+                                message += "\n\nЧто нового:\n" + releaseNotes;
+                            }
+                            message += "\n\nСкачать и установить обновление?";
+                            
+                            int choice = showConfirmBlocking(message, "Доступно обновление");
                             if (choice == JOptionPane.YES_OPTION) {
                                 Matcher assetMatcher = Pattern.compile("\"browser_download_url\"\\s*:\\s*\"([^\"]+)\"").matcher(json);
                                 
