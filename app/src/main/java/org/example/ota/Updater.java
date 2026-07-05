@@ -36,7 +36,19 @@ import javax.swing.SwingUtilities;
 public class Updater {
 
     private static final String GITHUB_REPO = "shepherl/kvnfaq"; 
-    public static final String CURRENT_VERSION = "1.7"; 
+    public static final String CURRENT_VERSION = "1.2"; 
+
+    private static String getIconPathForScript() {
+        String appPath = getAppPath();
+        if (appPath != null) {
+            // jpackage при сборке всегда переименовывает иконку в ИмяПриложения.icns
+            String path = appPath + "/Contents/Resources/KVN.icns";
+            if (java.nio.file.Files.exists(java.nio.file.Paths.get(path))) {
+                return path;
+            }
+        }
+        return null;
+    }
 
     private static String runAppleScript(String script) throws Exception {
         Process process = new ProcessBuilder("osascript", "-").start();
@@ -58,19 +70,20 @@ public class Updater {
 
     private static void showMessageBlocking(String message, String title, int messageType) {
         try {
+            String iconPath = getIconPathForScript();
             StringBuilder sb = new StringBuilder();
             sb.append("activate\n"); 
             
-            // Выбираем встроенную иконку AppleScript в зависимости от типа сообщения
-            String iconType = "note";
-            if (messageType == JOptionPane.ERROR_MESSAGE) {
-                iconType = "stop";
-            } else if (messageType == JOptionPane.WARNING_MESSAGE) {
-                iconType = "caution";
-            }
-            
             sb.append("display dialog \"").append(message).append("\" with title \"").append(title)
-              .append("\" buttons {\"OK\"} default button \"OK\" with icon ").append(iconType);
+              .append("\" buttons {\"OK\"} default button \"OK\"");
+              
+            if (iconPath != null) {
+                sb.append(" with icon POSIX file \"").append(iconPath).append("\"");
+            } else {
+                String fallbackIcon = (messageType == JOptionPane.ERROR_MESSAGE) ? "stop" : 
+                                      (messageType == JOptionPane.WARNING_MESSAGE) ? "caution" : "note";
+                sb.append(" with icon ").append(fallbackIcon);
+            }
               
             runAppleScript(sb.toString());
         } catch (Exception e) {
@@ -84,11 +97,18 @@ public class Updater {
 
     private static int showConfirmBlocking(String message, String title) {
         try {
+            String iconPath = getIconPathForScript();
             StringBuilder sb = new StringBuilder();
             sb.append("activate\n");
             
             sb.append("display dialog \"").append(message).append("\" with title \"").append(title)
-              .append("\" buttons {\"Нет\", \"Да\"} default button \"Да\" with icon note");
+              .append("\" buttons {\"Нет\", \"Да\"} default button \"Да\"");
+              
+            if (iconPath != null) {
+                sb.append(" with icon POSIX file \"").append(iconPath).append("\"");
+            } else {
+                sb.append(" with icon note");
+            }
             
             String result = runAppleScript(sb.toString());
             if (result.contains("Да")) {
