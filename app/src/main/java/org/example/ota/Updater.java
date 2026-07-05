@@ -27,18 +27,30 @@ public class Updater {
     private static final String GITHUB_REPO = "shepherl/kvnfaq"; 
     public static final String CURRENT_VERSION = "1.2"; 
 
+    private static String getIconPathForScript() {
+        String appPath = getAppPath();
+        if (appPath != null) {
+            // Иконка лежит внутри .app бандла
+            return appPath + "/Contents/Resources/kvn_logo_dock.icns";
+        }
+        return null;
+    }
+
     private static void showMessageBlocking(String message, String title, int messageType) {
         try {
-            // Используем нативный AppleScript для идеального отображения в macOS (включая темную тему)
+            String iconPath = getIconPathForScript();
+            String iconPart = (iconPath != null) 
+                ? " with icon POSIX file \"" + iconPath + "\"" 
+                : "";
             String script = String.format(
-                "display alert \"%s\" message \"%s\" buttons {\"OK\"} default button \"OK\"",
+                "display dialog \"%s\" with title \"%s\" buttons {\"OK\"} default button \"OK\"%s",
+                message.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n"),
                 title.replace("\"", "\\\""),
-                message.replace("\n", "\\r").replace("\"", "\\\"")
+                iconPart
             );
             Process process = new ProcessBuilder("osascript", "-e", script).start();
             process.waitFor();
         } catch (Exception e) {
-            // Фолбэк на старое Java-окно, если AppleScript почему-то не сработал
             JFrame topFrame = new JFrame();
             topFrame.setAlwaysOnTop(true);
             JOptionPane.showMessageDialog(topFrame, message, title, messageType);
@@ -48,16 +60,19 @@ public class Updater {
 
     private static int showConfirmBlocking(String message, String title) {
         try {
-            // Нативное окно macOS с поддержкой темной темы
+            String iconPath = getIconPathForScript();
+            String iconPart = (iconPath != null) 
+                ? " with icon POSIX file \"" + iconPath + "\"" 
+                : "";
             String script = String.format(
-                "display alert \"%s\" message \"%s\" buttons {\"Нет\", \"Да\"} default button \"Да\"",
+                "display dialog \"%s\" with title \"%s\" buttons {\"Нет\", \"Да\"} default button \"Да\"%s",
+                message.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n"),
                 title.replace("\"", "\\\""),
-                message.replace("\n", "\\r").replace("\"", "\\\"")
+                iconPart
             );
             Process process = new ProcessBuilder("osascript", "-e", script).start();
             process.waitFor();
             
-            // Читаем ответ от AppleScript
             try (java.util.Scanner s = new java.util.Scanner(process.getInputStream()).useDelimiter("\\A")) {
                 String result = s.hasNext() ? s.next() : "";
                 if (result.contains("Да")) {
@@ -67,7 +82,6 @@ public class Updater {
                 }
             }
         } catch (Exception e) {
-            // Фолбэк на старое Java-окно
             JFrame topFrame = new JFrame();
             topFrame.setAlwaysOnTop(true);
             int result = JOptionPane.showConfirmDialog(topFrame, message, title, JOptionPane.YES_NO_OPTION);
