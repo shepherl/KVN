@@ -41,7 +41,10 @@ public class Updater {
     private static String getIconPathForScript() {
         String appPath = getAppPath();
         if (appPath != null) {
-            return appPath + "/Contents/Resources/kvn_logo_dock.icns";
+            String path = appPath + "/Contents/Resources/kvn_logo_dock.icns";
+            if (java.nio.file.Files.exists(java.nio.file.Paths.get(path))) {
+                return path;
+            }
         }
         return null;
     }
@@ -51,6 +54,14 @@ public class Updater {
         process.getOutputStream().write(script.getBytes("UTF-8"));
         process.getOutputStream().close();
         process.waitFor();
+        
+        if (process.exitValue() != 0) {
+            try (java.util.Scanner s = new java.util.Scanner(process.getErrorStream()).useDelimiter("\\A")) {
+                String error = s.hasNext() ? s.next() : "Unknown error";
+                throw new Exception("AppleScript error: " + error);
+            }
+        }
+        
         try (java.util.Scanner s = new java.util.Scanner(process.getInputStream()).useDelimiter("\\A")) {
             return s.hasNext() ? s.next() : "";
         }
@@ -60,6 +71,7 @@ public class Updater {
         try {
             String iconPath = getIconPathForScript();
             StringBuilder sb = new StringBuilder();
+            sb.append("activate\n"); // Обязательно выводим на передний план
             sb.append("display dialog \"").append(message).append("\"");
             sb.append(" with title \"").append(title).append("\"");
             sb.append(" buttons {\"OK\"} default button \"OK\"");
@@ -68,6 +80,7 @@ public class Updater {
             }
             runAppleScript(sb.toString());
         } catch (Exception e) {
+            System.err.println("AppleScript failed, falling back to Java: " + e.getMessage());
             JFrame topFrame = new JFrame();
             topFrame.setAlwaysOnTop(true);
             JOptionPane.showMessageDialog(topFrame, message, title, messageType);
@@ -79,6 +92,7 @@ public class Updater {
         try {
             String iconPath = getIconPathForScript();
             StringBuilder sb = new StringBuilder();
+            sb.append("activate\n"); // Обязательно выводим на передний план
             sb.append("display dialog \"").append(message).append("\"");
             sb.append(" with title \"").append(title).append("\"");
             sb.append(" buttons {\"Нет\", \"Да\"} default button \"Да\"");
@@ -92,6 +106,7 @@ public class Updater {
                 return JOptionPane.NO_OPTION;
             }
         } catch (Exception e) {
+            System.err.println("AppleScript failed, falling back to Java: " + e.getMessage());
             JFrame topFrame = new JFrame();
             topFrame.setAlwaysOnTop(true);
             int result = JOptionPane.showConfirmDialog(topFrame, message, title, JOptionPane.YES_NO_OPTION);
