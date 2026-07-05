@@ -174,6 +174,12 @@ class UpdaterState: ObservableObject {
             if process.terminationStatus == 0 {
                 DispatchQueue.main.async {
                     self.showSuccess = true
+                    // Если пользователь за время установки переключился на другое окно — 
+                    // принудительно возвращаем наше окно апдейтера на самый передний план!
+                    NSApp.activate(ignoringOtherApps: true)
+                    for window in NSApp.windows {
+                        window.makeKeyAndOrderFront(nil)
+                    }
                 }
             } else {
                 DispatchQueue.main.async { self.statusText = "Ошибка при установке! (см. лог)" }
