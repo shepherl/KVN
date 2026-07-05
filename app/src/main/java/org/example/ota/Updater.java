@@ -267,7 +267,13 @@ public class Updater {
                 
                 SwingUtilities.invokeLater(() -> {
                     label.setText("Перезапуск...");
+                    label.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 18)); // Делаем шрифт крупнее
                     pb.setVisible(false); // Полностью скрываем полоску
+                    
+                    // Перемещаем текст из верхней части окна (NORTH) ровно в центр (CENTER)
+                    panel.add(label, BorderLayout.CENTER);
+                    panel.revalidate();
+                    panel.repaint();
                 });
                 
                 // Создаем невидимый bash-скрипт для установки
