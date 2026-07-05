@@ -140,29 +140,58 @@ public class Updater {
                 return;
             }
 
-            // Извлекаем KvnUpdater из ресурсов
-            Path updaterTempPath = Paths.get("/tmp/KvnUpdater");
+            // Создаём временный .app бандл — это единственный способ получить
+            // полноценный фокус окна на macOS Ventura+.
+            // Структура: /tmp/KvnUpdater.app/Contents/MacOS/KvnUpdater
+            //            /tmp/KvnUpdater.app/Contents/Info.plist
+            Path appBundlePath = Paths.get("/tmp/KvnUpdater.app");
+            Path macosDir = appBundlePath.resolve("Contents/MacOS");
+            Path plistPath = appBundlePath.resolve("Contents/Info.plist");
+            Path binaryPath = macosDir.resolve("KvnUpdater");
+
+            // Удаляем старый бандл, если есть
+            new ProcessBuilder("rm", "-rf", appBundlePath.toString()).start().waitFor();
+
+            // Создаём структуру папок
+            Files.createDirectories(macosDir);
+
+            // Извлекаем KvnUpdater из ресурсов в Contents/MacOS/
             try (InputStream is = Updater.class.getResourceAsStream("/KvnUpdater")) {
                 if (is == null) {
                     showMessageBlocking("Failed to locate KvnUpdater in resources.", "Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                Files.copy(is, updaterTempPath, StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(is, binaryPath, StandardCopyOption.REPLACE_EXISTING);
             }
 
-            // Делаем KvnUpdater исполняемым
+            // Делаем бинарник исполняемым
             Set<PosixFilePermission> perms = new HashSet<>();
             perms.add(PosixFilePermission.OWNER_READ);
             perms.add(PosixFilePermission.OWNER_WRITE);
             perms.add(PosixFilePermission.OWNER_EXECUTE);
-            Files.setPosixFilePermissions(updaterTempPath, perms);
+            Files.setPosixFilePermissions(binaryPath, perms);
 
-            // Запускаем апдейтер, передавая ему URL, путь к приложению и PID текущего процесса
+            // Создаём минимальный Info.plist
+            String plist = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+                + "<plist version=\"1.0\">\n<dict>\n"
+                + "  <key>CFBundleExecutable</key>\n  <string>KvnUpdater</string>\n"
+                + "  <key>CFBundleIdentifier</key>\n  <string>com.kvn.updater</string>\n"
+                + "  <key>CFBundleName</key>\n  <string>KVN Updater</string>\n"
+                + "  <key>CFBundlePackageType</key>\n  <string>APPL</string>\n"
+                + "  <key>CFBundleVersion</key>\n  <string>1.0</string>\n"
+                + "  <key>LSUIElement</key>\n  <false/>\n"
+                + "</dict>\n</plist>";
+            Files.writeString(plistPath, plist);
+
+            // Снимаем карантин с бандла
+            new ProcessBuilder("xattr", "-dr", "com.apple.quarantine", appBundlePath.toString()).start().waitFor();
+
+            // Запускаем через `open` — macOS воспринимает это как полноценное приложение
+            // и даёт ему право на фокус окна!
             new ProcessBuilder(
-                updaterTempPath.toString(), 
-                downloadUrl, 
-                appPath, 
-                String.valueOf(ProcessHandle.current().pid())
+                "open", appBundlePath.toString(),
+                "--args", downloadUrl, appPath, String.valueOf(ProcessHandle.current().pid())
             ).start();
             
             // Моментально завершаем Java-программу

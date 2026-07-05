@@ -45,28 +45,16 @@ class UpdaterState: ObservableObject {
     
     let args = CommandLine.arguments
     
-    /// Единственный надёжный способ вывести окно поверх всех на современных macOS:
-    /// просим систему саму активировать наш процесс через AppleScript.
+    /// Выводит окно на передний план. Теперь это работает надёжно,
+    /// потому что процесс запущен как полноценный .app через `open`.
     func bringToFront() {
-        // 1. Устанавливаем уровень окна выше всех
+        NSApp.activate(ignoringOtherApps: true)
         for window in NSApp.windows {
-            window.level = .screenSaver
+            window.level = .floating
             window.makeKeyAndOrderFront(nil)
             window.center()
             window.orderFrontRegardless()
         }
-        
-        // 2. Пробуем стандартный API
-        NSApp.activate(ignoringOtherApps: true)
-        
-        // 3. Главный козырь: через AppleScript просим macOS активировать процесс по PID.
-        //    Это обходит ограничения macOS Ventura+ для дочерних процессов.
-        let pid = ProcessInfo.processInfo.processIdentifier
-        let script = "tell application \"System Events\" to set frontmost of (every process whose unix id is \(pid)) to true"
-        let appleScript = Process()
-        appleScript.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        appleScript.arguments = ["-e", script]
-        try? appleScript.run()
     }
     
     func start() {
