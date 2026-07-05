@@ -108,7 +108,7 @@ public class Updater {
             String safeTitle = title.replace("\\", "\\\\").replace("\"", "\\\"");
             
             sb.append("display dialog \"").append(safeMessage).append("\" with title \"").append(safeTitle)
-              .append("\" buttons {\"Нет\", \"Да\"} default button \"Да\"");
+              .append("\" buttons {\"No\", \"Yes\"} default button \"Yes\"");
               
             if (iconPath != null) {
                 sb.append(" with icon POSIX file \"").append(iconPath).append("\"");
@@ -117,7 +117,7 @@ public class Updater {
             }
             
             String result = runAppleScript(sb.toString());
-            if (result.contains("Да")) {
+            if (result.contains("Yes")) {
                 return JOptionPane.YES_OPTION;
             } else {
                 return JOptionPane.NO_OPTION;
@@ -133,7 +133,7 @@ public class Updater {
     }
 
     public static void showSuccessDialog() {
-        showMessageBlocking("Обновление до новой версии прошло успешно!", "KVN Обновлён", JOptionPane.INFORMATION_MESSAGE);
+        showMessageBlocking("Update completed successfully!", "KVN Updated", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public static void checkForUpdates(boolean silentIfUpToDate) {
@@ -174,13 +174,13 @@ public class Updater {
                                 }
                             }
                             
-                            String message = "Найдена новая версия: " + latestVersion;
+                            String message = "New version found: " + latestVersion;
                             if (!releaseNotes.isEmpty()) {
-                                message += "\n\nЧто нового:\n" + releaseNotes;
+                                message += "\n\nWhat's new:\n" + releaseNotes;
                             }
-                            message += "\n\nСкачать и установить обновление?";
+                            message += "\n\nDownload and install the update?";
                             
-                            int choice = showConfirmBlocking(message, "Доступно обновление");
+                            int choice = showConfirmBlocking(message, "Update Available");
                             if (choice == JOptionPane.YES_OPTION) {
                                 Matcher assetMatcher = Pattern.compile("\"browser_download_url\"\\s*:\\s*\"([^\"]+)\"").matcher(json);
                                 
@@ -188,23 +188,23 @@ public class Updater {
                                     String downloadUrl = assetMatcher.group(1);
                                     downloadAndInstallInvisible(downloadUrl);
                                 } else {
-                                    showMessageBlocking("Не удалось найти файл в релизе.", "Ошибка", JOptionPane.ERROR_MESSAGE);
+                                    showMessageBlocking("Could not find the update file in the release.", "Error", JOptionPane.ERROR_MESSAGE);
                                 }
                             }
                         } else {
                             if (!silentIfUpToDate) {
-                                showMessageBlocking("Вы используете самую последнюю версию (" + CURRENT_VERSION + ").", "Обновление не требуется", JOptionPane.INFORMATION_MESSAGE);
+                                showMessageBlocking("You are using the latest version (" + CURRENT_VERSION + ").", "Up to date", JOptionPane.INFORMATION_MESSAGE);
                             }
                         }
                     }
                 } else {
                     if (!silentIfUpToDate) {
-                        showMessageBlocking("Не удалось проверить обновления. Статус: " + response.statusCode(), "Ошибка", JOptionPane.ERROR_MESSAGE);
+                        showMessageBlocking("Failed to check for updates. Status: " + response.statusCode(), "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             } catch (Exception e) {
                 if (!silentIfUpToDate) {
-                    showMessageBlocking("Ошибка при проверке обновлений: " + e.getMessage(), "Ошибка", JOptionPane.ERROR_MESSAGE);
+                    showMessageBlocking("Error checking for updates: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }).start();
@@ -213,7 +213,7 @@ public class Updater {
     private static void downloadAndInstallInvisible(String downloadUrl) {
         String appPath = getAppPath();
         if (appPath == null) {
-            showMessageBlocking("Не удалось определить путь к приложению.", "Ошибка", JOptionPane.ERROR_MESSAGE);
+            showMessageBlocking("Could not determine the application path.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -224,12 +224,10 @@ public class Updater {
         dialog.setLocationRelativeTo(null);
         dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         
-        // Красим саму "болванку" окна в тёмный цвет до её отрисовки, чтобы не было белого моргания
         Color darkBg = new Color(35, 35, 35);
         dialog.getContentPane().setBackground(darkBg);
         dialog.setBackground(darkBg);
         
-        // Скругленные углы
         try {
             dialog.setShape(new java.awt.geom.RoundRectangle2D.Double(0, 0, 400, 110, 20, 20));
         } catch (Exception ignored) {}
@@ -238,7 +236,7 @@ public class Updater {
         panel.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
         panel.setBackground(darkBg);
         
-        JLabel label = new JLabel("Скачивание обновления KVN...");
+        JLabel label = new JLabel("Downloading KVN update...");
         label.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 15));
         label.setForeground(new Color(230, 230, 230));
         label.setHorizontalAlignment(JLabel.CENTER);
@@ -285,12 +283,12 @@ public class Updater {
                     
                     // Строгая проверка целостности скачанного файла!
                     if (fileSize > 0 && totalRead != fileSize) {
-                        throw new java.io.IOException("Файл скачан не полностью! Ожидалось: " + fileSize + " байт, скачано: " + totalRead + " байт. Проверьте стабильность интернет-соединения.");
+                        throw new java.io.IOException("The file was not downloaded completely! Expected: " + fileSize + " bytes, downloaded: " + totalRead + " bytes. Please check your internet connection.");
                     }
                 }
                 
                 SwingUtilities.invokeLater(() -> {
-                    label.setText("Перезапуск...");
+                    label.setText("Installing...");
                     label.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 18)); // Делаем шрифт крупнее
                     pb.setVisible(false); // Полностью скрываем полоску
                     
@@ -354,7 +352,7 @@ public class Updater {
             } catch (Exception e) {
                 SwingUtilities.invokeLater(() -> {
                     dialog.dispose();
-                    showMessageBlocking("Ошибка при скачивании/установке: " + e.getMessage(), "Ошибка", JOptionPane.ERROR_MESSAGE);
+                    showMessageBlocking("Download/installation error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 });
             }
         }).start();
