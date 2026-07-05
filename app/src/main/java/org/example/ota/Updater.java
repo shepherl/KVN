@@ -60,7 +60,18 @@ public class Updater {
         try {
             StringBuilder sb = new StringBuilder();
             sb.append("activate\n"); 
-            sb.append("display alert \"").append(title).append("\" message \"").append(message).append("\" buttons {\"OK\"} default button \"OK\"");
+            
+            // Выбираем встроенную иконку AppleScript в зависимости от типа сообщения
+            String iconType = "note";
+            if (messageType == JOptionPane.ERROR_MESSAGE) {
+                iconType = "stop";
+            } else if (messageType == JOptionPane.WARNING_MESSAGE) {
+                iconType = "caution";
+            }
+            
+            sb.append("display dialog \"").append(message).append("\" with title \"").append(title)
+              .append("\" buttons {\"OK\"} default button \"OK\" with icon ").append(iconType);
+              
             runAppleScript(sb.toString());
         } catch (Exception e) {
             System.err.println("AppleScript failed, falling back to Java: " + e.getMessage());
@@ -75,8 +86,9 @@ public class Updater {
         try {
             StringBuilder sb = new StringBuilder();
             sb.append("activate\n");
-            // Возвращаемся к display alert для красивого окна
-            sb.append("display alert \"").append(title).append("\" message \"").append(message).append("\" buttons {\"Нет\", \"Да\"} default button \"Да\"");
+            
+            sb.append("display dialog \"").append(message).append("\" with title \"").append(title)
+              .append("\" buttons {\"Нет\", \"Да\"} default button \"Да\" with icon note");
             
             String result = runAppleScript(sb.toString());
             if (result.contains("Да")) {
@@ -233,27 +245,37 @@ public class Updater {
                 String scriptContent;
                 if (isZip) {
                     scriptContent = "#!/bin/bash\n"
+                        + "exec > /tmp/kvn_update_log.txt 2>&1\n" // Записываем весь лог
+                        + "set -x\n"
                         + "PID=" + ProcessHandle.current().pid() + "\n"
                         + "while kill -0 $PID 2>/dev/null; do sleep 0.5; done\n"
                         + "rm -rf \"" + extractDir + "\"\n"
                         + "mkdir -p \"" + extractDir + "\"\n"
                         + "unzip -q \"" + downloadDest + "\" -d \"" + extractDir + "\"\n"
                         + "DMG_FILE=$(find \"" + extractDir + "\" -name \"*.dmg\" | head -n 1)\n"
-                        + "hdiutil attach \"$DMG_FILE\" -nobrowse\n"
-                        + "rm -rf \"" + appPath + "\"\n"
-                        + "cp -R \"/Volumes/KVN Installation/KVN.app\" \"" + appPath + "\"\n"
-                        + "xattr -dr com.apple.quarantine \"" + appPath + "\" 2>/dev/null\n"
+                        + "hdiutil detach \"/Volumes/KVN Installation\" -force 2>/dev/null\n"
+                        + "hdiutil attach \"$DMG_FILE\" -mountpoint \"/Volumes/KVN Installation\" -nobrowse\n"
+                        + "if [ -d \"/Volumes/KVN Installation/KVN.app\" ]; then\n"
+                        + "    rm -rf \"" + appPath + "\"\n"
+                        + "    cp -R \"/Volumes/KVN Installation/KVN.app\" \"" + appPath + "\"\n"
+                        + "    xattr -dr com.apple.quarantine \"" + appPath + "\" 2>/dev/null\n"
+                        + "fi\n"
                         + "hdiutil detach \"/Volumes/KVN Installation\" -force 2>/dev/null\n"
                         + "rm -rf \"" + extractDir + "\" \"" + downloadDest + "\"\n"
                         + "open \"" + appPath + "\" --args --update-success\n";
                 } else {
                     scriptContent = "#!/bin/bash\n"
+                        + "exec > /tmp/kvn_update_log.txt 2>&1\n" // Записываем весь лог
+                        + "set -x\n"
                         + "PID=" + ProcessHandle.current().pid() + "\n"
                         + "while kill -0 $PID 2>/dev/null; do sleep 0.5; done\n"
-                        + "hdiutil attach \"" + downloadDest + "\" -nobrowse\n"
-                        + "rm -rf \"" + appPath + "\"\n"
-                        + "cp -R \"/Volumes/KVN Installation/KVN.app\" \"" + appPath + "\"\n"
-                        + "xattr -dr com.apple.quarantine \"" + appPath + "\" 2>/dev/null\n"
+                        + "hdiutil detach \"/Volumes/KVN Installation\" -force 2>/dev/null\n"
+                        + "hdiutil attach \"" + downloadDest + "\" -mountpoint \"/Volumes/KVN Installation\" -nobrowse\n"
+                        + "if [ -d \"/Volumes/KVN Installation/KVN.app\" ]; then\n"
+                        + "    rm -rf \"" + appPath + "\"\n"
+                        + "    cp -R \"/Volumes/KVN Installation/KVN.app\" \"" + appPath + "\"\n"
+                        + "    xattr -dr com.apple.quarantine \"" + appPath + "\" 2>/dev/null\n"
+                        + "fi\n"
                         + "hdiutil detach \"/Volumes/KVN Installation\" -force 2>/dev/null\n"
                         + "rm -rf \"" + downloadDest + "\"\n"
                         + "open \"" + appPath + "\" --args --update-success\n";
