@@ -18,13 +18,6 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      - name: Compile Swift Updater (Intel)
-        run: |
-          swiftc -parse-as-library updater.swift \
-            -target x86_64-apple-macosx13.0 \
-            -o app/src/main/resources/KvnUpdater
-          chmod +x app/src/main/resources/KvnUpdater
-          echo "KvnUpdater compiled and placed in resources"
 
       - name: Build Java App with Gradle
         run: ./gradlew build

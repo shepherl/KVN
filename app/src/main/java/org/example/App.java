@@ -25,7 +25,13 @@ public class App {
         FileCheck fileCheck = new FileCheck(pathBase,configPath);
         fileCheck.startStart();
 
-        // (Проверка успешного обновления удалена - теперь этим занимается Swift-апдейтер)
+        // Проверяем, не запустились ли мы сразу после успешного обновления
+        for (String arg : args) {
+            if ("--update-success".equals(arg)) {
+                Updater.showSuccessDialog();
+                break;
+            }
+        }
 
         System.setProperty("apple.awt.UIElement", "true");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {

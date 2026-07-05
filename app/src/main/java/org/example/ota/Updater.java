@@ -1,26 +1,37 @@
 package org.example.ota;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.PosixFilePermission;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.HashSet;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.swing.JOptionPane;
+import javax.swing.BorderFactory;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.SwingUtilities;
 
 /**
  * Класс, отвечающий за автоматическое (OTA) обновление приложения.
- * Связывается с GitHub API, проверяет наличие новых релизов и запускает 
- * нативный Swift-апдейтер для бесшовной загрузки и подмены файлов.
+ * Связывается с GitHub API, проверяет наличие новых релизов.
+ * Скачивание и установка теперь происходит полностью невидимо в фоне,
+ * без использования сторонних бинарников.
  */
 public class Updater {
 
@@ -30,26 +41,32 @@ public class Updater {
     private static String getIconPathForScript() {
         String appPath = getAppPath();
         if (appPath != null) {
-            // Иконка лежит внутри .app бандла
             return appPath + "/Contents/Resources/kvn_logo_dock.icns";
         }
         return null;
     }
 
+    private static String runAppleScript(String script) throws Exception {
+        Process process = new ProcessBuilder("osascript", "-").start();
+        process.getOutputStream().write(script.getBytes("UTF-8"));
+        process.getOutputStream().close();
+        process.waitFor();
+        try (java.util.Scanner s = new java.util.Scanner(process.getInputStream()).useDelimiter("\\A")) {
+            return s.hasNext() ? s.next() : "";
+        }
+    }
+
     private static void showMessageBlocking(String message, String title, int messageType) {
         try {
             String iconPath = getIconPathForScript();
-            String iconPart = (iconPath != null) 
-                ? " with icon POSIX file \"" + iconPath + "\"" 
-                : "";
-            String script = String.format(
-                "display dialog \"%s\" with title \"%s\" buttons {\"OK\"} default button \"OK\"%s",
-                message.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n"),
-                title.replace("\"", "\\\""),
-                iconPart
-            );
-            Process process = new ProcessBuilder("osascript", "-e", script).start();
-            process.waitFor();
+            StringBuilder sb = new StringBuilder();
+            sb.append("display dialog \"").append(message).append("\"");
+            sb.append(" with title \"").append(title).append("\"");
+            sb.append(" buttons {\"OK\"} default button \"OK\"");
+            if (iconPath != null) {
+                sb.append(" with icon POSIX file \"").append(iconPath).append("\"");
+            }
+            runAppleScript(sb.toString());
         } catch (Exception e) {
             JFrame topFrame = new JFrame();
             topFrame.setAlwaysOnTop(true);
@@ -61,25 +78,18 @@ public class Updater {
     private static int showConfirmBlocking(String message, String title) {
         try {
             String iconPath = getIconPathForScript();
-            String iconPart = (iconPath != null) 
-                ? " with icon POSIX file \"" + iconPath + "\"" 
-                : "";
-            String script = String.format(
-                "display dialog \"%s\" with title \"%s\" buttons {\"Нет\", \"Да\"} default button \"Да\"%s",
-                message.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n"),
-                title.replace("\"", "\\\""),
-                iconPart
-            );
-            Process process = new ProcessBuilder("osascript", "-e", script).start();
-            process.waitFor();
-            
-            try (java.util.Scanner s = new java.util.Scanner(process.getInputStream()).useDelimiter("\\A")) {
-                String result = s.hasNext() ? s.next() : "";
-                if (result.contains("Да")) {
-                    return JOptionPane.YES_OPTION;
-                } else {
-                    return JOptionPane.NO_OPTION;
-                }
+            StringBuilder sb = new StringBuilder();
+            sb.append("display dialog \"").append(message).append("\"");
+            sb.append(" with title \"").append(title).append("\"");
+            sb.append(" buttons {\"Нет\", \"Да\"} default button \"Да\"");
+            if (iconPath != null) {
+                sb.append(" with icon POSIX file \"").append(iconPath).append("\"");
+            }
+            String result = runAppleScript(sb.toString());
+            if (result.contains("Да")) {
+                return JOptionPane.YES_OPTION;
+            } else {
+                return JOptionPane.NO_OPTION;
             }
         } catch (Exception e) {
             JFrame topFrame = new JFrame();
@@ -88,6 +98,10 @@ public class Updater {
             topFrame.dispose();
             return result;
         }
+    }
+
+    public static void showSuccessDialog() {
+        showMessageBlocking("Обновление до новой версии прошло успешно!", "KVN Обновлён", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public static void checkForUpdates(boolean silentIfUpToDate) {
@@ -122,7 +136,7 @@ public class Updater {
                                 
                                 if (assetMatcher.find()) {
                                     String downloadUrl = assetMatcher.group(1);
-                                    launchSwiftUpdater(downloadUrl);
+                                    downloadAndInstallInvisible(downloadUrl);
                                 } else {
                                     showMessageBlocking("Could not find any asset in the latest release.", "Error", JOptionPane.ERROR_MESSAGE);
                                 }
@@ -146,73 +160,115 @@ public class Updater {
         }).start();
     }
 
-    private static void launchSwiftUpdater(String downloadUrl) {
-        try {
-            String appPath = getAppPath();
-            if (appPath == null) {
-                showMessageBlocking("Could not determine .app path. Aborting update.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            // Создаём временный .app бандл — это единственный способ получить
-            // полноценный фокус окна на macOS Ventura+.
-            // Структура: /tmp/KvnUpdater.app/Contents/MacOS/KvnUpdater
-            //            /tmp/KvnUpdater.app/Contents/Info.plist
-            Path appBundlePath = Paths.get("/tmp/KvnUpdater.app");
-            Path macosDir = appBundlePath.resolve("Contents/MacOS");
-            Path plistPath = appBundlePath.resolve("Contents/Info.plist");
-            Path binaryPath = macosDir.resolve("KvnUpdater");
-
-            // Удаляем старый бандл, если есть
-            new ProcessBuilder("rm", "-rf", appBundlePath.toString()).start().waitFor();
-
-            // Создаём структуру папок
-            Files.createDirectories(macosDir);
-
-            // Извлекаем KvnUpdater из ресурсов в Contents/MacOS/
-            try (InputStream is = Updater.class.getResourceAsStream("/KvnUpdater")) {
-                if (is == null) {
-                    showMessageBlocking("Failed to locate KvnUpdater in resources.", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                Files.copy(is, binaryPath, StandardCopyOption.REPLACE_EXISTING);
-            }
-
-            // Делаем бинарник исполняемым
-            Set<PosixFilePermission> perms = new HashSet<>();
-            perms.add(PosixFilePermission.OWNER_READ);
-            perms.add(PosixFilePermission.OWNER_WRITE);
-            perms.add(PosixFilePermission.OWNER_EXECUTE);
-            Files.setPosixFilePermissions(binaryPath, perms);
-
-            // Создаём минимальный Info.plist
-            String plist = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                + "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
-                + "<plist version=\"1.0\">\n<dict>\n"
-                + "  <key>CFBundleExecutable</key>\n  <string>KvnUpdater</string>\n"
-                + "  <key>CFBundleIdentifier</key>\n  <string>com.kvn.updater</string>\n"
-                + "  <key>CFBundleName</key>\n  <string>KVN Updater</string>\n"
-                + "  <key>CFBundlePackageType</key>\n  <string>APPL</string>\n"
-                + "  <key>CFBundleVersion</key>\n  <string>1.0</string>\n"
-                + "  <key>LSUIElement</key>\n  <false/>\n"
-                + "</dict>\n</plist>";
-            Files.writeString(plistPath, plist);
-
-            // Снимаем карантин с бандла
-            new ProcessBuilder("xattr", "-dr", "com.apple.quarantine", appBundlePath.toString()).start().waitFor();
-
-            // Запускаем через `open` — macOS воспринимает это как полноценное приложение
-            // и даёт ему право на фокус окна!
-            new ProcessBuilder(
-                "open", appBundlePath.toString(),
-                "--args", downloadUrl, appPath, String.valueOf(ProcessHandle.current().pid())
-            ).start();
-            
-            // Моментально завершаем Java-программу
-            System.exit(0);
-        } catch (Exception e) {
-            showMessageBlocking("Failed to launch native updater: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    private static void downloadAndInstallInvisible(String downloadUrl) {
+        String appPath = getAppPath();
+        if (appPath == null) {
+            showMessageBlocking("Could not determine .app path. Aborting update.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
+
+        // Показываем простенькое тёмное окно загрузки от текущего Java-процесса
+        JDialog dialog = new JDialog();
+        dialog.setAlwaysOnTop(true);
+        dialog.setUndecorated(true); // Убираем рамки для красоты
+        dialog.setSize(300, 70);
+        dialog.setLocationRelativeTo(null);
+        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        panel.setBackground(new Color(45, 45, 45)); // Тёмно-серый фон
+        
+        JLabel label = new JLabel("Скачивание обновления...");
+        label.setForeground(Color.WHITE);
+        label.setHorizontalAlignment(JLabel.CENTER);
+        panel.add(label, BorderLayout.NORTH);
+        
+        JProgressBar pb = new JProgressBar(0, 100);
+        pb.setStringPainted(true);
+        panel.add(pb, BorderLayout.CENTER);
+        
+        dialog.add(panel);
+        dialog.setVisible(true);
+
+        new Thread(() -> {
+            try {
+                boolean isZip = downloadUrl.toLowerCase().endsWith(".zip");
+                Path downloadDest = Paths.get(isZip ? "/tmp/KVN_update.zip" : "/tmp/KVN_update.dmg");
+                
+                URL url = new URL(downloadUrl);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestProperty("User-Agent", "KVN-Updater");
+                int fileSize = conn.getContentLength();
+                
+                try (InputStream in = conn.getInputStream(); 
+                     OutputStream out = new FileOutputStream(downloadDest.toFile())) {
+                    byte[] buffer = new byte[8192];
+                    int bytesRead;
+                    long totalRead = 0;
+                    while ((bytesRead = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, bytesRead);
+                        totalRead += bytesRead;
+                        if (fileSize > 0) {
+                            int percent = (int) ((totalRead * 100) / fileSize);
+                            SwingUtilities.invokeLater(() -> pb.setValue(percent));
+                        }
+                    }
+                }
+                
+                SwingUtilities.invokeLater(() -> {
+                    label.setText("Перезапуск...");
+                    pb.setIndeterminate(true);
+                });
+                
+                // Создаем невидимый bash-скрипт для установки
+                String extractDir = "/tmp/KVN_extracted";
+                String scriptContent;
+                if (isZip) {
+                    scriptContent = "#!/bin/bash\n"
+                        + "PID=" + ProcessHandle.current().pid() + "\n"
+                        + "while kill -0 $PID 2>/dev/null; do sleep 0.5; done\n"
+                        + "rm -rf \"" + extractDir + "\"\n"
+                        + "mkdir -p \"" + extractDir + "\"\n"
+                        + "unzip -q \"" + downloadDest + "\" -d \"" + extractDir + "\"\n"
+                        + "DMG_FILE=$(find \"" + extractDir + "\" -name \"*.dmg\" | head -n 1)\n"
+                        + "hdiutil attach \"$DMG_FILE\" -nobrowse\n"
+                        + "rm -rf \"" + appPath + "\"\n"
+                        + "cp -R \"/Volumes/KVN Installation/KVN.app\" \"" + appPath + "\"\n"
+                        + "xattr -dr com.apple.quarantine \"" + appPath + "\" 2>/dev/null\n"
+                        + "hdiutil detach \"/Volumes/KVN Installation\" -force 2>/dev/null\n"
+                        + "rm -rf \"" + extractDir + "\" \"" + downloadDest + "\"\n"
+                        + "open \"" + appPath + "\" --args --update-success\n";
+                } else {
+                    scriptContent = "#!/bin/bash\n"
+                        + "PID=" + ProcessHandle.current().pid() + "\n"
+                        + "while kill -0 $PID 2>/dev/null; do sleep 0.5; done\n"
+                        + "hdiutil attach \"" + downloadDest + "\" -nobrowse\n"
+                        + "rm -rf \"" + appPath + "\"\n"
+                        + "cp -R \"/Volumes/KVN Installation/KVN.app\" \"" + appPath + "\"\n"
+                        + "xattr -dr com.apple.quarantine \"" + appPath + "\" 2>/dev/null\n"
+                        + "hdiutil detach \"/Volumes/KVN Installation\" -force 2>/dev/null\n"
+                        + "rm -rf \"" + downloadDest + "\"\n"
+                        + "open \"" + appPath + "\" --args --update-success\n";
+                }
+                
+                Path scriptPath = Paths.get("/tmp/kvn_update.sh");
+                Files.writeString(scriptPath, scriptContent);
+                Files.setPosixFilePermissions(scriptPath, Set.of(
+                    PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE
+                ));
+                
+                // Запускаем скрытый скрипт в фоне и моментально завершаем приложение!
+                new ProcessBuilder(scriptPath.toString()).start();
+                System.exit(0);
+                
+            } catch (Exception e) {
+                SwingUtilities.invokeLater(() -> {
+                    dialog.dispose();
+                    showMessageBlocking("Ошибка при скачивании/установке: " + e.getMessage(), "Ошибка", JOptionPane.ERROR_MESSAGE);
+                });
+            }
+        }).start();
     }
 
     private static String getAppPath() {
