@@ -36,7 +36,7 @@ import javax.swing.SwingUtilities;
 public class Updater {
 
     private static final String GITHUB_REPO = "shepherl/kvnfaq"; 
-    public static final String CURRENT_VERSION = "1.4"; 
+    public static final String CURRENT_VERSION = "2.0"; 
 
     private static String getIconPathForScript() {
         String appPath = getAppPath();
