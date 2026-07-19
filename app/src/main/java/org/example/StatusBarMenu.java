@@ -450,14 +450,15 @@ public class StatusBarMenu {
                 
                 if (useProxy) {
                     // Если нужно включить прокси - проверяем, вдруг Chrome УЖЕ запущен с точно такими же параметрами
-                    script.append("if ps aux | grep \"[G]oogle Chrome\" | grep -qF \"--proxy-server=socks5://127.0.0.1:").append(port).append("\" && ");
-                    script.append("ps aux | grep \"[G]oogle Chrome\" | grep -qF \"--proxy-bypass-list=*.ru\"; then\n");
+                    // Используем ps xww, чтобы macOS не обрезала длинные строки запуска (что и ломало проверку раньше)
+                    script.append("if ps xww | grep \"[G]oogle Chrome\" | grep -qF \"--proxy-server=socks5://127.0.0.1:").append(port).append("\" && ");
+                    script.append("ps xww | grep \"[G]oogle Chrome\" | grep -qF \"--proxy-bypass-list=*.ru\"; then\n");
                     script.append("    echo \"Chrome is already running with the correct proxy settings. Skipping restart.\"\n");
                     script.append("    exit 0\n");
                     script.append("fi\n\n");
                 } else {
-                    // Если нужно отключить прокси - проверяем, запущен ли Chrome с НАШИМИ прокси-флагами
-                    script.append("if ! ps aux | grep \"[G]oogle Chrome\" | grep -q \"--proxy-server=socks5://127.0.0.1:").append(port).append("\"; then\n");
+                    // Если нужно отключить прокси (или выйти из программы) - проверяем, запущен ли Chrome с НАШИМИ прокси-флагами
+                    script.append("if ! ps xww | grep \"[G]oogle Chrome\" | grep -q \"--proxy-server=socks5://127.0.0.1:").append(port).append("\"; then\n");
                     script.append("    echo \"Chrome is not running or already running without our proxy. Skipping restart.\"\n");
                     script.append("    exit 0\n");
                     script.append("fi\n\n");
