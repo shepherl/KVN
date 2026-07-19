@@ -97,6 +97,10 @@ public static void AutoStartStatusrWrite(boolean start_status, Path basePath) {
         updateJsonField("proxyPort", String.valueOf(port), false, basePath);
     }
 
+    public static void BrowserIntegrationWrite(int status, Path basePath) {
+        updateJsonField("BrowserIntegration", String.valueOf(status), false, basePath);
+    }
+
     private static void updateJsonField(String key, String value, boolean isString, Path basePath) {
         Path path = basePath.resolve("AutoStartStatus.json");
         try {

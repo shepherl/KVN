@@ -99,4 +99,17 @@ public class SettingsParser { // Парсер значений из json
         return 1080; // Default
     }
 
+    public static int getBrowserIntegration() {
+        String userName = System.getProperty("user.name");
+        Path path = Path.of("/Users", userName, "KVN", "AutoStartStatus.json");
+        try {
+            String content = Files.readString(path);
+            String val = findValue(content, "BrowserIntegration");
+            if (!val.equals("Not found")) {
+                return Integer.parseInt(val.trim());
+            }
+        } catch (Exception e) {}
+        return 1; // Default: 1 (Auto-inject Chrome)
+    }
+
 }

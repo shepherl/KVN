@@ -25,6 +25,7 @@ public class StatusBarMenu {
     public MenuItem statusItem;
     public MenuItem toggleConnectItem;
     public CheckboxMenuItem autoStatrtCheckbox;
+    public CheckboxMenuItem chromeInjectItem;
     public Menu dnsMenu;
     public Menu engineMenu;
     public Menu profilesMenu;
@@ -51,6 +52,9 @@ public class StatusBarMenu {
         statusItem.setEnabled(false);
         toggleConnectItem = new MenuItem("Connect VPN");
         autoStatrtCheckbox = new CheckboxMenuItem("Auto Connect",SettingsParser.auto_start());
+        
+        boolean isAutoInject = SettingsParser.getBrowserIntegration() == 1;
+        chromeInjectItem = new CheckboxMenuItem("Auto Chrome Proxy", isAutoInject);
         
         engineMenu = new Menu("Proxy Engine");
         int currentEngine = SettingsParser.getProxyEngine();
@@ -85,7 +89,7 @@ public class StatusBarMenu {
         dnsMenu.addSeparator();
         dnsMenu.add(customDnsItem);
 
-        profilesMenu = new Menu("Profiles");
+        profilesMenu = new Menu("Configs");
         refreshProfilesMenu();
 
         updateItem = new MenuItem("Check for updates...");
@@ -107,7 +111,7 @@ public class StatusBarMenu {
     private void refreshProfilesMenu() {
         profilesMenu.removeAll();
         
-        MenuItem addProfileItem = new MenuItem("Add New Profile...");
+        MenuItem addProfileItem = new MenuItem("Add New Config...");
         addProfileItem.addActionListener(e -> {
             FileDialog fd = new FileDialog((Frame)null,"Add Config", FileDialog.LOAD);
             fd.setVisible(true);
@@ -367,6 +371,14 @@ public class StatusBarMenu {
             }
         });
 
+        chromeInjectItem.addItemListener(e -> {
+            boolean status = chromeInjectItem.getState();
+            FileUtils.BrowserIntegrationWrite(status ? 1 : 0, pathBase);
+            
+            // Если мы отключаем интеграцию, и при этом VPN запущен, мы не откатываем Chrome,
+            // пользователь должен сам управлять прокси.
+        });
+
         toggleConnectItem.addActionListener(e -> {
             int engine = SettingsParser.getProxyEngine();
             int port = SettingsParser.getProxyPort();
@@ -440,6 +452,11 @@ public class StatusBarMenu {
     }
 
     Thread restartBrowser(boolean useProxy, int port) {
+        if (SettingsParser.getBrowserIntegration() == 0) {
+            System.out.println("Browser integration is disabled. Skipping Chrome restart.");
+            return null;
+        }
+        
         Thread t = new Thread(() -> {
             try {
                 System.out.println("Restarting Google Chrome. useProxy=" + useProxy + ", port=" + port);
@@ -514,6 +531,7 @@ public class StatusBarMenu {
         menu.addSeparator();
         menu.add(toggleConnectItem);
         menu.add(autoStatrtCheckbox);
+        menu.add(chromeInjectItem);
         menu.addSeparator();
         menu.add(engineMenu);
 
