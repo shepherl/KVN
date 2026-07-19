@@ -439,7 +439,7 @@ public class StatusBarMenu {
         });
     }
 
-    private Thread restartBrowser(boolean useProxy, int port) {
+    Thread restartBrowser(boolean useProxy, int port) {
         Thread t = new Thread(() -> {
             try {
                 System.out.println("Restarting Google Chrome. useProxy=" + useProxy + ", port=" + port);
