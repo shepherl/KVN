@@ -340,6 +340,7 @@ public class StatusBarMenu {
 
     private void restartVpn() {
         int engine = SettingsParser.getProxyEngine();
+        int port = SettingsParser.getProxyPort();
         System.out.println("Restarting VPN to apply new settings...");
         stopCurrentProxy(engine);
         statusItem.setLabel("Status: Reconnecting...");
@@ -348,6 +349,7 @@ public class StatusBarMenu {
         if (startCurrentProxy(engine)) {
             statusItem.setLabel("Status: Connected 🟢");
             toggleConnectItem.setLabel("Disconnect");
+            restartBrowser(true, port);
         } else {
             statusItem.setLabel("Status: Error 🔴");
         }
@@ -365,13 +367,15 @@ public class StatusBarMenu {
             }
         });
 
-       toggleConnectItem.addActionListener(e -> {
+        toggleConnectItem.addActionListener(e -> {
             int engine = SettingsParser.getProxyEngine();
+            int port = SettingsParser.getProxyPort();
             if (toggleConnectItem.getLabel().equals("Connect VPN")) {
                 statusItem.setLabel("Status: Connecting...");
                 if (startCurrentProxy(engine)) {
                     statusItem.setLabel("Status: Connected 🟢");
                     toggleConnectItem.setLabel("Disconnect");
+                    restartBrowser(true, port);
                 } else {
                     statusItem.setLabel("Status: Error 🔴");
                 }
@@ -379,6 +383,7 @@ public class StatusBarMenu {
                 stopCurrentProxy(engine);
                 statusItem.setLabel("Status: Disconnected 🔴");
                 toggleConnectItem.setLabel("Connect VPN");
+                restartBrowser(false, port);
             }
         });
 
@@ -420,8 +425,39 @@ public class StatusBarMenu {
         exitItem.addActionListener(e -> {
             int engine = SettingsParser.getProxyEngine();
             stopCurrentProxy(engine);
+            restartBrowser(false, 0); // Сбрасываем прокси при выходе
             System.exit(0);
         });
+    }
+
+    private void restartBrowser(boolean useProxy, int port) {
+        new Thread(() -> {
+            try {
+                System.out.println("Restarting Google Chrome. useProxy=" + useProxy + ", port=" + port);
+                // Мягко закрываем Chrome через AppleScript
+                ProcessBuilder killPb = new ProcessBuilder("osascript", "-e", "quit app \"Google Chrome\"");
+                killPb.start().waitFor();
+                
+                // Ждём 2 секунды, чтобы процесс точно завершился
+                Thread.sleep(2000);
+                
+                // Собираем команду запуска
+                List<String> command = new ArrayList<>();
+                command.add("open");
+                command.add("-a");
+                command.add("Google Chrome");
+                
+                if (useProxy) {
+                    command.add("--args");
+                    command.add("--proxy-server=socks5://127.0.0.1:" + port);
+                }
+                
+                new ProcessBuilder(command).start();
+                
+            } catch (Exception ex) {
+                System.err.println("Failed to restart browser: " + ex.getMessage());
+            }
+        }).start();
     }
 
     public void addPopupMenu(){
