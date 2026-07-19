@@ -435,22 +435,26 @@ public class StatusBarMenu {
             try {
                 System.out.println("Restarting Google Chrome. useProxy=" + useProxy + ", port=" + port);
                 
-                // Убиваем Chrome жёстко и ждём полного завершения всех его процессов
-                // Затем запускаем напрямую через бинарник (не через open --args, который ненадёжно передаёт аргументы)
-                String launchCmd;
+                // Записываем скрипт в файл, чтобы избежать любых проблем с экранированием кавычек
+                StringBuilder script = new StringBuilder();
+                script.append("#!/bin/bash\n");
+                script.append("killall \"Google Chrome\" 2>/dev/null\n");
+                script.append("while pgrep -x \"Google Chrome\" > /dev/null; do sleep 0.5; done\n");
+                script.append("sleep 1\n");
                 if (useProxy) {
-                    launchCmd = "\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --proxy-server=\"socks5://127.0.0.1:" + port + "\" &";
+                    script.append("open -a \"Google Chrome\" --args --proxy-server=\"socks5://127.0.0.1:").append(port).append("\"\n");
                 } else {
-                    launchCmd = "open -a \"Google Chrome\"";
+                    script.append("open -a \"Google Chrome\"\n");
                 }
                 
-                String cmd = "killall \"Google Chrome\" 2>/dev/null; " +
-                             "while pgrep -x \"Google Chrome\" > /dev/null; do sleep 0.5; done; " +
-                             "sleep 1; " +
-                             launchCmd;
-                             
-                ProcessBuilder pb = new ProcessBuilder("bash", "-c", cmd);
-                pb.start();
+                java.nio.file.Path scriptPath = java.nio.file.Path.of("/tmp/kvn_chrome_restart.sh");
+                java.nio.file.Files.writeString(scriptPath, script.toString());
+                scriptPath.toFile().setExecutable(true);
+                
+                // Для отладки: выводим содержимое скрипта
+                System.out.println("DEBUG: Script content:\n" + script.toString());
+                
+                new ProcessBuilder("bash", "/tmp/kvn_chrome_restart.sh").start();
                 
             } catch (Exception ex) {
                 System.err.println("Failed to restart browser: " + ex.getMessage());
