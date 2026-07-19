@@ -434,25 +434,15 @@ public class StatusBarMenu {
         new Thread(() -> {
             try {
                 System.out.println("Restarting Google Chrome. useProxy=" + useProxy + ", port=" + port);
-                // Мягко закрываем Chrome через AppleScript
-                ProcessBuilder killPb = new ProcessBuilder("osascript", "-e", "quit app \"Google Chrome\"");
-                killPb.start().waitFor();
                 
-                // Ждём 2 секунды, чтобы процесс точно завершился
-                Thread.sleep(2000);
-                
-                // Собираем команду запуска
-                List<String> command = new ArrayList<>();
-                command.add("open");
-                command.add("-a");
-                command.add("Google Chrome");
-                
-                if (useProxy) {
-                    command.add("--args");
-                    command.add("--proxy-server=socks5://127.0.0.1:" + port);
-                }
-                
-                new ProcessBuilder(command).start();
+                // Формируем команду в точности как вы написали, чтобы она выполнялась в оболочке bash
+                String proxyArg = useProxy ? "--args --proxy-server=\"socks5://127.0.0.1:" + port + "\"" : "";
+                String cmd = "osascript -e 'quit app \"Google Chrome\"' 2>/dev/null; " +
+                             "sleep 2; " +
+                             "open -a \"Google Chrome\" " + proxyArg;
+                             
+                ProcessBuilder pb = new ProcessBuilder("bash", "-c", cmd);
+                pb.start().waitFor();
                 
             } catch (Exception ex) {
                 System.err.println("Failed to restart browser: " + ex.getMessage());
