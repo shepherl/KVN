@@ -442,7 +442,7 @@ public class StatusBarMenu {
                 script.append("while pgrep -x \"Google Chrome\" > /dev/null; do sleep 0.5; done\n");
                 script.append("sleep 1\n");
                 if (useProxy) {
-                    script.append("open -a \"Google Chrome\" --args --proxy-server=\"socks5://127.0.0.1:").append(port).append("\" --proxy-bypass-list=\"2ip.ru\"\n");
+                    script.append("open -a \"Google Chrome\" --args --proxy-server=\"socks5://127.0.0.1:").append(port).append("\" --proxy-bypass-list=\"!*2ip.ru;*.ru\"\n");
                 } else {
                     script.append("open -a \"Google Chrome\"\n");
                 }
