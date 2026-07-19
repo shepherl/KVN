@@ -438,7 +438,7 @@ public class StatusBarMenu {
                 // Записываем скрипт в файл, чтобы избежать любых проблем с экранированием кавычек
                 StringBuilder script = new StringBuilder();
                 script.append("#!/bin/bash\n");
-                script.append("killall \"Google Chrome\" 2>/dev/null\n");
+                script.append("osascript -e 'quit app \"Google Chrome\"' 2>/dev/null\n");
                 script.append("while pgrep -x \"Google Chrome\" > /dev/null; do sleep 0.5; done\n");
                 script.append("sleep 1\n");
                 if (useProxy) {
