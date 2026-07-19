@@ -353,7 +353,7 @@ public class StatusBarMenu {
         if (startCurrentProxy(engine)) {
             statusItem.setLabel("Status: Connected 🟢");
             toggleConnectItem.setLabel("Disconnect");
-            restartBrowser(true, port);
+            restartBrowser(true, port, false);
         } else {
             statusItem.setLabel("Status: Error 🔴");
         }
@@ -375,8 +375,16 @@ public class StatusBarMenu {
             boolean status = chromeInjectItem.getState();
             FileUtils.BrowserIntegrationWrite(status ? 1 : 0, pathBase);
             
-            // Если мы отключаем интеграцию, и при этом VPN запущен, мы не откатываем Chrome,
-            // пользователь должен сам управлять прокси.
+            int port = SettingsParser.getProxyPort();
+            boolean isConnected = toggleConnectItem.getLabel().equals("Disconnect");
+            
+            if (!status) {
+                // Пользователь снял галочку -> принудительно очищаем Chrome от наших флагов
+                restartBrowser(false, port, true);
+            } else if (isConnected) {
+                // Пользователь поставил галочку и VPN запущен -> принудительно применяем наши флаги
+                restartBrowser(true, port, true);
+            }
         });
 
         toggleConnectItem.addActionListener(e -> {
@@ -387,7 +395,7 @@ public class StatusBarMenu {
                 if (startCurrentProxy(engine)) {
                     statusItem.setLabel("Status: Connected 🟢");
                     toggleConnectItem.setLabel("Disconnect");
-                    restartBrowser(true, port);
+                    restartBrowser(true, port, false);
                 } else {
                     statusItem.setLabel("Status: Error 🔴");
                 }
@@ -395,7 +403,7 @@ public class StatusBarMenu {
                 stopCurrentProxy(engine);
                 statusItem.setLabel("Status: Disconnected 🔴");
                 toggleConnectItem.setLabel("Connect VPN");
-                restartBrowser(false, port);
+                restartBrowser(false, port, false);
             }
         });
 
@@ -442,7 +450,7 @@ public class StatusBarMenu {
             // Запускаем отдельный поток для ожидания перезапуска браузера перед выходом,
             // чтобы System.exit(0) не убил программу раньше времени
             new Thread(() -> {
-                Thread browserThread = restartBrowser(false, port); // Передаем актуальный порт для проверки "наших" флагов
+                Thread browserThread = restartBrowser(false, port, false); // Передаем актуальный порт для проверки "наших" флагов
                 try {
                     if (browserThread != null) browserThread.join();
                 } catch (InterruptedException ex) {}
@@ -451,8 +459,8 @@ public class StatusBarMenu {
         });
     }
 
-    Thread restartBrowser(boolean useProxy, int port) {
-        if (SettingsParser.getBrowserIntegration() == 0) {
+    Thread restartBrowser(boolean useProxy, int port, boolean force) {
+        if (!force && SettingsParser.getBrowserIntegration() == 0) {
             System.out.println("Browser integration is disabled. Skipping Chrome restart.");
             return null;
         }

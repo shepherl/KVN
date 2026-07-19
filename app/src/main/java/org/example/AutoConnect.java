@@ -27,7 +27,7 @@ public class AutoConnect {
                 AutoStart.setAutoLaunch(true);
                 statusBarMenu.statusItem.setLabel("Status: Connected 🟢");
                 statusBarMenu.toggleConnectItem.setLabel("Disconnect");
-                statusBarMenu.restartBrowser(true, port); // Применяем настройки прокси к браузеру при автостарте
+                statusBarMenu.restartBrowser(true, port, false); // Применяем настройки прокси к браузеру при автостарте
             } else {
                 System.out.println("Ошибка запуска утилиты");
             }
