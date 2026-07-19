@@ -26,6 +26,7 @@ public class StatusBarMenu {
     public MenuItem toggleConnectItem;
     public CheckboxMenuItem autoStatrtCheckbox;
     public CheckboxMenuItem chromeInjectItem;
+    public MenuItem openChromeItem;
     public Menu dnsMenu;
     public Menu engineMenu;
     public Menu profilesMenu;
@@ -54,7 +55,9 @@ public class StatusBarMenu {
         autoStatrtCheckbox = new CheckboxMenuItem("Auto Connect",SettingsParser.auto_start());
         
         boolean isAutoInject = SettingsParser.getBrowserIntegration() == 1;
-        chromeInjectItem = new CheckboxMenuItem("Auto Chrome Proxy", isAutoInject);
+        chromeInjectItem = new CheckboxMenuItem("Auto Chrome Proxy (Beta)", isAutoInject);
+        
+        openChromeItem = new MenuItem("Open Chrome");
         
         engineMenu = new Menu("Proxy Engine");
         int currentEngine = SettingsParser.getProxyEngine();
@@ -385,6 +388,14 @@ public class StatusBarMenu {
                 // Пользователь поставил галочку и VPN запущен -> принудительно применяем наши флаги
                 restartBrowser(true, port, true);
             }
+            addPopupMenu(); // Перестраиваем меню, чтобы скрыть/показать кнопку Open Chrome
+        });
+        
+        openChromeItem.addActionListener(e -> {
+            int port = SettingsParser.getProxyPort();
+            boolean isConnected = toggleConnectItem.getLabel().equals("Disconnect");
+            // Принудительно перезапускаем Chrome (с прокси, если VPN включен, иначе без)
+            restartBrowser(isConnected, port, true);
         });
 
         toggleConnectItem.addActionListener(e -> {
@@ -540,6 +551,9 @@ public class StatusBarMenu {
         menu.add(toggleConnectItem);
         menu.add(autoStatrtCheckbox);
         menu.add(chromeInjectItem);
+        if (chromeInjectItem.getState()) {
+            menu.add(openChromeItem);
+        }
         menu.addSeparator();
         menu.add(engineMenu);
 
