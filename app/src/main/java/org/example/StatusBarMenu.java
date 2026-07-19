@@ -444,33 +444,41 @@ public class StatusBarMenu {
             try {
                 System.out.println("Restarting Google Chrome. useProxy=" + useProxy + ", port=" + port);
                 
-                // Записываем скрипт в файл, чтобы избежать любых проблем с экранированием кавычек
                 StringBuilder script = new StringBuilder();
                 script.append("#!/bin/bash\n\n");
+                script.append("export PATH=\"/usr/bin:/bin:/usr/sbin:/sbin\"\n\n");
                 
                 if (useProxy) {
-                    // Если нужно включить прокси - проверяем, вдруг Chrome УЖЕ запущен с точно такими же параметрами
-                    // Используем ps xww, чтобы macOS не обрезала длинные строки запуска (что и ломало проверку раньше)
-                    script.append("if ps xww | grep \"[G]oogle Chrome\" | grep -qF \"--proxy-server=socks5://127.0.0.1:").append(port).append("\" && ");
-                    script.append("ps xww | grep \"[G]oogle Chrome\" | grep -qF \"--proxy-bypass-list=*.ru\"; then\n");
+                    script.append("if pgrep -f \"Google Chrome.*--proxy-server=socks5://127.0.0.1:").append(port).append("\" > /dev/null && ");
+                    script.append("pgrep -f \"Google Chrome.*--proxy-bypass-list=\\*.ru\" > /dev/null; then\n");
                     script.append("    echo \"Chrome is already running with the correct proxy settings. Skipping restart.\"\n");
                     script.append("    exit 0\n");
                     script.append("fi\n\n");
                 } else {
-                    // Если нужно отключить прокси (или выйти из программы) - проверяем, запущен ли Chrome с НАШИМИ прокси-флагами
-                    script.append("if ! ps xww | grep \"[G]oogle Chrome\" | grep -q \"--proxy-server=socks5://127.0.0.1:").append(port).append("\"; then\n");
+                    script.append("if ! pgrep -f \"Google Chrome.*--proxy-server=socks5://127.0.0.1:").append(port).append("\" > /dev/null; then\n");
                     script.append("    echo \"Chrome is not running or already running without our proxy. Skipping restart.\"\n");
                     script.append("    exit 0\n");
                     script.append("fi\n\n");
                 }
                 
+                script.append("echo \"Restarting Chrome...\"\n");
                 script.append("osascript -e 'quit app \"Google Chrome\"' 2>/dev/null\n");
-                script.append("while pgrep -x \"Google Chrome\" > /dev/null; do sleep 0.5; done\n");
-                script.append("sleep 1\n");
+                script.append("count=0\n");
+                script.append("while pgrep -x \"Google Chrome\" > /dev/null && [ $count -lt 6 ]; do\n");
+                script.append("    sleep 0.5\n");
+                script.append("    count=$((count+1))\n");
+                script.append("done\n");
+                script.append("if pgrep -x \"Google Chrome\" > /dev/null; then\n");
+                script.append("    echo \"Force killing Chrome...\"\n");
+                script.append("    killall \"Google Chrome\" 2>/dev/null\n");
+                script.append("    sleep 1\n");
+                script.append("fi\n");
                 
                 if (useProxy) {
+                    script.append("echo \"Starting Chrome WITH proxy\"\n");
                     script.append("open -a \"Google Chrome\" --args --proxy-server=\"socks5://127.0.0.1:").append(port).append("\" --proxy-bypass-list=\"*.ru\"\n");
                 } else {
+                    script.append("echo \"Starting Chrome WITHOUT proxy\"\n");
                     script.append("open -a \"Google Chrome\"\n");
                 }
                 
@@ -478,10 +486,17 @@ public class StatusBarMenu {
                 java.nio.file.Files.writeString(scriptPath, script.toString());
                 scriptPath.toFile().setExecutable(true);
                 
-                // Для отладки: выводим содержимое скрипта
-                System.out.println("DEBUG: Script content:\n" + script.toString());
+                System.out.println("DEBUG: Executing script...");
+                Process p = new ProcessBuilder("bash", "/tmp/kvn_chrome_restart.sh").redirectErrorStream(true).start();
                 
-                new ProcessBuilder("bash", "/tmp/kvn_chrome_restart.sh").start().waitFor();
+                try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(p.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        System.out.println("[BASH]: " + line);
+                    }
+                }
+                p.waitFor();
+                System.out.println("DEBUG: Script finished.");
                 
             } catch (Exception ex) {
                 System.err.println("Failed to restart browser: " + ex.getMessage());
