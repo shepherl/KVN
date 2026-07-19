@@ -435,14 +435,22 @@ public class StatusBarMenu {
             try {
                 System.out.println("Restarting Google Chrome. useProxy=" + useProxy + ", port=" + port);
                 
-                // Используем killall вместо osascript, чтобы избежать проблем с правами Automation в macOS
-                String proxyArg = useProxy ? "--args --proxy-server=\"socks5://127.0.0.1:" + port + "\"" : "";
+                // Убиваем Chrome жёстко и ждём полного завершения всех его процессов
+                // Затем запускаем напрямую через бинарник (не через open --args, который ненадёжно передаёт аргументы)
+                String launchCmd;
+                if (useProxy) {
+                    launchCmd = "\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --proxy-server=\"socks5://127.0.0.1:" + port + "\" &";
+                } else {
+                    launchCmd = "open -a \"Google Chrome\"";
+                }
+                
                 String cmd = "killall \"Google Chrome\" 2>/dev/null; " +
-                             "sleep 2; " +
-                             "open -a \"Google Chrome\" " + proxyArg;
+                             "while pgrep -x \"Google Chrome\" > /dev/null; do sleep 0.5; done; " +
+                             "sleep 1; " +
+                             launchCmd;
                              
                 ProcessBuilder pb = new ProcessBuilder("bash", "-c", cmd);
-                pb.start().waitFor();
+                pb.start();
                 
             } catch (Exception ex) {
                 System.err.println("Failed to restart browser: " + ex.getMessage());
