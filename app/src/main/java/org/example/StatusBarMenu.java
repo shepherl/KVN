@@ -435,9 +435,9 @@ public class StatusBarMenu {
             try {
                 System.out.println("Restarting Google Chrome. useProxy=" + useProxy + ", port=" + port);
                 
-                // Формируем команду в точности как вы написали, чтобы она выполнялась в оболочке bash
+                // Используем killall вместо osascript, чтобы избежать проблем с правами Automation в macOS
                 String proxyArg = useProxy ? "--args --proxy-server=\"socks5://127.0.0.1:" + port + "\"" : "";
-                String cmd = "osascript -e 'quit app \"Google Chrome\"' 2>/dev/null; " +
+                String cmd = "killall \"Google Chrome\" 2>/dev/null; " +
                              "sleep 2; " +
                              "open -a \"Google Chrome\" " + proxyArg;
                              
