@@ -437,12 +437,29 @@ public class StatusBarMenu {
                 
                 // Записываем скрипт в файл, чтобы избежать любых проблем с экранированием кавычек
                 StringBuilder script = new StringBuilder();
-                script.append("#!/bin/bash\n");
+                script.append("#!/bin/bash\n\n");
+                
+                if (useProxy) {
+                    // Если нужно включить прокси - проверяем, вдруг Chrome УЖЕ запущен с точно такими же параметрами
+                    script.append("if ps aux | grep \"[G]oogle Chrome\" | grep -qF \"--proxy-server=socks5://127.0.0.1:").append(port).append("\" && ");
+                    script.append("ps aux | grep \"[G]oogle Chrome\" | grep -qF \"--proxy-bypass-list=*.ru\"; then\n");
+                    script.append("    echo \"Chrome is already running with the correct proxy settings. Skipping restart.\"\n");
+                    script.append("    exit 0\n");
+                    script.append("fi\n\n");
+                } else {
+                    // Если нужно отключить прокси - проверяем, запущен ли Chrome вообще, и есть ли у него прокси-флаги
+                    script.append("if ! ps aux | grep \"[G]oogle Chrome\" | grep -q \"--proxy-server=\"; then\n");
+                    script.append("    echo \"Chrome is not running or already running without proxy. Skipping restart.\"\n");
+                    script.append("    exit 0\n");
+                    script.append("fi\n\n");
+                }
+                
                 script.append("osascript -e 'quit app \"Google Chrome\"' 2>/dev/null\n");
                 script.append("while pgrep -x \"Google Chrome\" > /dev/null; do sleep 0.5; done\n");
                 script.append("sleep 1\n");
+                
                 if (useProxy) {
-                    script.append("open -a \"Google Chrome\" --args --proxy-server=\"socks5://127.0.0.1:").append(port).append("\" --proxy-bypass-list=\"!*2ip.ru;*.ru\"\n");
+                    script.append("open -a \"Google Chrome\" --args --proxy-server=\"socks5://127.0.0.1:").append(port).append("\" --proxy-bypass-list=\"*.ru\"\n");
                 } else {
                     script.append("open -a \"Google Chrome\"\n");
                 }
