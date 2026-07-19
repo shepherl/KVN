@@ -68,9 +68,9 @@ public class SettingsParser { // Парсер значений из json
                 return Integer.parseInt(val.trim());
             }
         } catch (Exception e) {
-            // Если поля нет, возвращаем 0 по умолчанию
+            // Если поля нет, возвращаем 1 по умолчанию
         }
-        return 0; // Default: Wireproxy
+        return 1; // Default: Opera Proxy
     }
 
     public static String getActiveProfile() {
