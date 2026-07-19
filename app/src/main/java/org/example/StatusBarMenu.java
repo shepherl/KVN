@@ -424,14 +424,23 @@ public class StatusBarMenu {
 
         exitItem.addActionListener(e -> {
             int engine = SettingsParser.getProxyEngine();
+            int port = SettingsParser.getProxyPort();
             stopCurrentProxy(engine);
-            restartBrowser(false, 0); // Сбрасываем прокси при выходе
-            System.exit(0);
+            
+            // Запускаем отдельный поток для ожидания перезапуска браузера перед выходом,
+            // чтобы System.exit(0) не убил программу раньше времени
+            new Thread(() -> {
+                Thread browserThread = restartBrowser(false, port); // Передаем актуальный порт для проверки "наших" флагов
+                try {
+                    if (browserThread != null) browserThread.join();
+                } catch (InterruptedException ex) {}
+                System.exit(0);
+            }).start();
         });
     }
 
-    private void restartBrowser(boolean useProxy, int port) {
-        new Thread(() -> {
+    private Thread restartBrowser(boolean useProxy, int port) {
+        Thread t = new Thread(() -> {
             try {
                 System.out.println("Restarting Google Chrome. useProxy=" + useProxy + ", port=" + port);
                 
@@ -447,9 +456,9 @@ public class StatusBarMenu {
                     script.append("    exit 0\n");
                     script.append("fi\n\n");
                 } else {
-                    // Если нужно отключить прокси - проверяем, запущен ли Chrome вообще, и есть ли у него прокси-флаги
-                    script.append("if ! ps aux | grep \"[G]oogle Chrome\" | grep -q \"--proxy-server=\"; then\n");
-                    script.append("    echo \"Chrome is not running or already running without proxy. Skipping restart.\"\n");
+                    // Если нужно отключить прокси - проверяем, запущен ли Chrome с НАШИМИ прокси-флагами
+                    script.append("if ! ps aux | grep \"[G]oogle Chrome\" | grep -q \"--proxy-server=socks5://127.0.0.1:").append(port).append("\"; then\n");
+                    script.append("    echo \"Chrome is not running or already running without our proxy. Skipping restart.\"\n");
                     script.append("    exit 0\n");
                     script.append("fi\n\n");
                 }
@@ -471,12 +480,14 @@ public class StatusBarMenu {
                 // Для отладки: выводим содержимое скрипта
                 System.out.println("DEBUG: Script content:\n" + script.toString());
                 
-                new ProcessBuilder("bash", "/tmp/kvn_chrome_restart.sh").start();
+                new ProcessBuilder("bash", "/tmp/kvn_chrome_restart.sh").start().waitFor();
                 
             } catch (Exception ex) {
                 System.err.println("Failed to restart browser: " + ex.getMessage());
             }
-        }).start();
+        });
+        t.start();
+        return t;
     }
 
     public void addPopupMenu(){
